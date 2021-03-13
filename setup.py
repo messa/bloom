@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
-import setuptools
+from setuptools import setup, Extension
 
-setuptools.setup()
+setup(
+    ext_modules=[
+        Extension('bloom.hashc', ['bloom/hashcmodule.c'])
+    ])
