@@ -2,6 +2,8 @@
 Pure-Python implementation of the hash algorithms from hashcmodule.c.
 '''
 
+from functools import partial
+
 
 def fnv1a_32(sample):
     # Source: https://softwareengineering.stackexchange.com/a/145633/22518
@@ -25,3 +27,16 @@ def fnv1a_64(sample):
         hval = hval ^ c
         hval = (hval * prime) % uint64_max
     return hval
+
+
+def insert_bloom(hash_func, array, data, sample_size):
+    bitsize = len(array) * 8
+    bytesize = len(array)
+    for offset in range(len(data) - sample_size):
+        sample = data[offset:offset + sample_size]
+        h = hash_func(sample) % bitsize
+        array[h // 8] |= 1 << (h % 8)
+
+
+insert_bloom_fnv1a_32 = partial(insert_bloom, fnv1a_32)
+insert_bloom_fnv1a_64 = partial(insert_bloom, fnv1a_64)

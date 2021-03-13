@@ -38,26 +38,95 @@ static uint64_t fnv1a_64(const unsigned char *data, size_t size) {
 }
 
 static PyObject* hashc_fnv1a_64(PyObject *self, PyObject *args) {
-    const char *sample;
+    const unsigned char *sample;
     Py_ssize_t sampleSize;
     if (!PyArg_ParseTuple(args, "s#", &sample, &sampleSize)) {
 	    return NULL;
     }
     uint64_t h = fnv1a_64(sample, sampleSize);
     return PyLong_FromUnsignedLongLong(h);
+}
 
+static void insert_bloom_fnv1a_32(
+    unsigned char *array, Py_ssize_t arraySize,
+    const unsigned char *data, Py_ssize_t dataSize,
+    unsigned sampleSize)
+{
+    if (array == NULL || data == NULL) return;
+    if (dataSize < sampleSize) return;
+    const Py_ssize_t arrayBitsize = arraySize * 8;
+    const Py_ssize_t offsetEnd = dataSize - sampleSize;
+    for (Py_ssize_t offset = 0; offset < offsetEnd; ++offset) {
+        const uint32_t h = fnv1a_32(data + offset, sampleSize) % arrayBitsize;
+        array[h / 8] |= 1 << (h % 8);
+    }
+}
+
+static PyObject* hashc_insert_bloom_fnv1a_32(PyObject *self, PyObject *args) {
+    PyByteArrayObject *array;
+    const unsigned char *data;
+    Py_ssize_t dataSize;
+    unsigned sampleSize;
+    if (!PyArg_ParseTuple(args, "Ys#I", &array, &data, &dataSize, &sampleSize)) {
+	    return NULL;
+    }
+    const Py_ssize_t arraySize = PyByteArray_Size(array);
+    insert_bloom_fnv1a_32(
+        (unsigned char *) PyByteArray_AsString(array),
+        arraySize,
+        data,
+        dataSize,
+        sampleSize);
+    // TODO: do I need to decrement array refcount?
+    return Py_BuildValue("");
+}
+
+static void insert_bloom_fnv1a_64(
+    unsigned char *array, Py_ssize_t arraySize,
+    const unsigned char *data, Py_ssize_t dataSize,
+    unsigned sampleSize)
+{
+    if (array == NULL || data == NULL) return;
+    if (dataSize < sampleSize) return;
+    const Py_ssize_t arrayBitsize = arraySize * 8;
+    const Py_ssize_t offsetEnd = dataSize - sampleSize;
+    for (Py_ssize_t offset = 0; offset < offsetEnd; ++offset) {
+        const uint64_t h = fnv1a_64(data + offset, sampleSize) % arrayBitsize;
+        array[h / 8] |= 1 << (h % 8);
+    }
+}
+
+static PyObject* hashc_insert_bloom_fnv1a_64(PyObject *self, PyObject *args) {
+    PyByteArrayObject *array;
+    const unsigned char *data;
+    Py_ssize_t dataSize;
+    unsigned sampleSize;
+    if (!PyArg_ParseTuple(args, "Ys#I", &array, &data, &dataSize, &sampleSize)) {
+	    return NULL;
+    }
+    const Py_ssize_t arraySize = PyByteArray_Size(array);
+    insert_bloom_fnv1a_64(
+        (unsigned char *) PyByteArray_AsString(array),
+        arraySize,
+        data,
+        dataSize,
+        sampleSize);
+    // TODO: do I need to decrement array refcount?
+    return Py_BuildValue("");
 }
 
 static PyMethodDef methods[] = {
     {"hello", hashc_hello, METH_VARARGS, "Sample function."},
     {"fnv1a_32", hashc_fnv1a_32, METH_VARARGS, "FNV-1A 32-bit version."},
     {"fnv1a_64", hashc_fnv1a_64, METH_VARARGS, "FNV-1A 64-bit version."},
+    {"insert_bloom_fnv1a_32", hashc_insert_bloom_fnv1a_32, METH_VARARGS, "Update bloom filter array."},
+    {"insert_bloom_fnv1a_64", hashc_insert_bloom_fnv1a_64, METH_VARARGS, "Update bloom filter array."},
     {NULL, NULL, 0, NULL}
 };
 
 static struct PyModuleDef hashcmodule = {
     PyModuleDef_HEAD_INIT,
-    "hashc",
+    "_hashc",
     NULL,
     -1,
     methods
