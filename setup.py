@@ -4,5 +4,5 @@ from setuptools import setup, Extension
 
 setup(
     ext_modules=[
-        Extension('bloom.hashc', ['bloom/hashcmodule.c'])
+        Extension('bloom._hashc', ['bloom/_hashcmodule.c'])
     ])
