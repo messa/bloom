@@ -32,7 +32,7 @@ def _performance_hash(func):
     t0 = monotime()
     total_bytes = 0
     for i in range(50):
-        sample = os.urandom(2**16)
+        sample = os.urandom(2**14)
         total_bytes += len(sample)
         func(sample)
     td = monotime() - t0
@@ -95,9 +95,9 @@ def _test_insert_bloom_fnv1a_32(insert_bloom_fnv1a_32):
 def _performance_bloom(func):
     t0 = monotime()
     total_bytes = 0
-    array = bytearray(2**20)
+    array = bytearray(2**16)
     for i in range(50):
-        data = os.urandom(2**14)
+        data = os.urandom(2**12)
         total_bytes += len(data)
         func(array, data, 4)
     td = monotime() - t0

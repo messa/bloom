@@ -22,7 +22,7 @@ static PyObject* hashc_fnv1a_32(PyObject *self, PyObject *args) {
     const unsigned char *sample;
     Py_ssize_t sampleSize;
     if (!PyArg_ParseTuple(args, "s#", &sample, &sampleSize)) {
-	    return NULL;
+        return NULL;
     }
     uint32_t h = fnv1a_32(sample, sampleSize);
     return PyLong_FromLong(h);
@@ -41,7 +41,7 @@ static PyObject* hashc_fnv1a_64(PyObject *self, PyObject *args) {
     const unsigned char *sample;
     Py_ssize_t sampleSize;
     if (!PyArg_ParseTuple(args, "s#", &sample, &sampleSize)) {
-	    return NULL;
+        return NULL;
     }
     uint64_t h = fnv1a_64(sample, sampleSize);
     return PyLong_FromUnsignedLongLong(h);
@@ -68,7 +68,7 @@ static PyObject* hashc_insert_bloom_fnv1a_32(PyObject *self, PyObject *args) {
     Py_ssize_t dataSize;
     unsigned sampleSize;
     if (!PyArg_ParseTuple(args, "Ys#I", &array, &data, &dataSize, &sampleSize)) {
-	    return NULL;
+        return NULL;
     }
     const Py_ssize_t arraySize = PyByteArray_Size(array);
     insert_bloom_fnv1a_32(
@@ -102,7 +102,7 @@ static PyObject* hashc_insert_bloom_fnv1a_64(PyObject *self, PyObject *args) {
     Py_ssize_t dataSize;
     unsigned sampleSize;
     if (!PyArg_ParseTuple(args, "Ys#I", &array, &data, &dataSize, &sampleSize)) {
-	    return NULL;
+        return NULL;
     }
     const Py_ssize_t arraySize = PyByteArray_Size(array);
     insert_bloom_fnv1a_64(
