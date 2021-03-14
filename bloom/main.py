@@ -67,7 +67,7 @@ def index_files(db, paths):
 
 
 def filter_files(db, paths, expressions):
-    for path in file_paths:
+    for path in paths:
         path_resolved = path.resolve()
         with path.open(mode='rb') as f:
             f_stat = os.fstat(f.fileno())
@@ -90,6 +90,10 @@ def construct_match_array(bytesize, expressions):
         expr_bytes = expr.lower().encode('utf-8')
         bloom_index_func(match_array, expr_bytes, sample_size)
     return bytes(match_array)
+
+
+def compute_file_bloom_array(stream):
+    raise Exception('NIY')
 
 
 def setup_logging():
