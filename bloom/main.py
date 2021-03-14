@@ -22,12 +22,13 @@ sample_size = 4
 
 def bloom_main():
     p = ArgumentParser()
+    p.add_argument('--verbose', '-v', action='store_true')
     p.add_argument('--db', help='path to database file')
     p.add_argument('--file', '-f', action='append', help='file to process')
     p.add_argument('--index', help='index only, do not perform search')
     p.add_argument('expression', nargs='*')
     args = p.parse_args()
-    setup_logging()
+    setup_logging(args.verbose)
     if not args.index and not args.expression:
         sys.exit('ERROR: No expression provided')
     if args.db:
@@ -80,7 +81,10 @@ def filter_files(db, paths, expressions, array_bytesize=default_array_bytesize):
                 db.set_file_array(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, sample_size, file_array)
             match_array = construct_match_array(len(file_array), expressions, sample_size=sample_size)
             if array_is_subset(match_array, file_array):
+                logger.debug('File possibly matching: %s', path)
                 yield path
+            else:
+                logger.debug('File does not match: %s', path)
 
 
 def construct_match_array(array_bytesize, expressions, sample_size):
@@ -128,6 +132,6 @@ def construct_file_array(raw_stream, array_bytesize, sample_size):
     return bytes(file_array)
 
 
-def setup_logging():
-    from logging import DEBUG, basicConfig
-    basicConfig(format=log_format, level=DEBUG)
+def setup_logging(verbose):
+    from logging import DEBUG, INFO, basicConfig
+    basicConfig(format=log_format, level=DEBUG if verbose else INFO)
