@@ -62,7 +62,7 @@ def index_files(db, paths):
                 logger.debug('File is up-to-date: %s', path)
             else:
                 logger.info('Indexing file: %s', path)
-                file_array = compute_file_bloom_array(f)
+                file_array = construct_file_array(f)
                 db.set_file_array(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, file_array)
 
 
