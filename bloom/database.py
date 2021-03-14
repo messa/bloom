@@ -49,8 +49,14 @@ class Database:
         key = f"{path}:{size}:{mtime}:{version}:{sample_size}"
         now = int(time())
         cur = self._conn.cursor()
+        # The upsert syntax works in sqlite since 3.24.0, but it seems some Python installations have older version
+        #cur.execute('''
+        #    INSERT INTO bloom_files_v1 (key, created, last_accessed, array) VALUES (?, ?, ?, ?)
+        #    ON CONFLICT (key) DO UPDATE SET created=?, last_accessed=?, array=?
+        #''', (key, now, now, array, now, now, array))
+        # So let's do DELETE + INSERT instead :)
+        cur.execute('DELETE FROM bloom_files_v1 WHERE key=?', (key, ))
         cur.execute('''
             INSERT INTO bloom_files_v1 (key, created, last_accessed, array) VALUES (?, ?, ?, ?)
-            ON CONFLICT (key) DO UPDATE SET created=?, last_accessed=?, array=?
-        ''', (key, now, now, array, now, now, array))
+        ''', (key, now, now, array))
         self._conn.commit()
