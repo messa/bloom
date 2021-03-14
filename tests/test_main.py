@@ -8,11 +8,11 @@ def test_construct_match_array():
 
 
 def test_array_is_subset():
-    assert array_is_subset(bytes.fromhex('00'), bytes.fromhex('00')) == True
-    assert array_is_subset(bytes.fromhex('00'), bytes.fromhex('01')) == True
-    assert array_is_subset(bytes.fromhex('01'), bytes.fromhex('00')) == False
-    assert array_is_subset(bytes.fromhex('01'), bytes.fromhex('02')) == False
-    assert array_is_subset(bytes.fromhex('01'), bytes.fromhex('03')) == True
+    assert array_is_subset(bytes.fromhex('00'), bytes.fromhex('00')) is True
+    assert array_is_subset(bytes.fromhex('00'), bytes.fromhex('01')) is True
+    assert array_is_subset(bytes.fromhex('01'), bytes.fromhex('00')) is False
+    assert array_is_subset(bytes.fromhex('01'), bytes.fromhex('02')) is False
+    assert array_is_subset(bytes.fromhex('01'), bytes.fromhex('03')) is True
 
 
 def test_construct_file_array_simple(temp_dir):

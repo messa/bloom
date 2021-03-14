@@ -31,7 +31,6 @@ def fnv1a_64(sample):
 
 def insert_bloom(hash_func, array, data, sample_size):
     bitsize = len(array) * 8
-    bytesize = len(array)
     for offset in range(len(data) - sample_size + 1):
         sample = data[offset:offset + sample_size]
         assert len(sample) == sample_size
