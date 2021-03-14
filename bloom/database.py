@@ -31,7 +31,7 @@ class Database:
     def init(self):
         cur = self._conn.cursor()
         cur.execute('''
-            CREATE TABLE bloom_files_v1 (
+            CREATE TABLE IF NOT EXISTS bloom_files_v1 (
                 key text PRIMARY KEY,
                 created integer,
                 last_accessed integer,
