@@ -2,7 +2,7 @@ from bloom.main import construct_match_array, array_is_subset, construct_file_ar
 
 
 def test_construct_match_array():
-    array = construct_match_array(16, ['hello', 'world'])
+    array = construct_match_array(16, ['hello', 'world'], sample_size=4)
     assert isinstance(array, bytes)
     assert array.hex() == '00002000600000000000000000001000'
 
@@ -19,6 +19,6 @@ def test_construct_file_array_simple(temp_dir):
     p = temp_dir / 'one.txt'
     p.write_text('hello\nworld\n')
     with p.open(mode='rb') as f:
-        array = construct_file_array(f)
+        array = construct_file_array(f, array_bytesize=16, sample_size=4)
     assert isinstance(array, bytes)
     assert array.hex() == '00002000600000000000000000001000'

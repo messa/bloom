@@ -14,7 +14,7 @@ log_format = '%(asctime)s %(name)s %(levelname)5s: %(message)s'
 
 hash_func_name = 'fnv1a_64'
 bloom_index_func = insert_bloom_fnv1a_64
-array_bytesize = 2**16
+default_array_bytesize = 2**16
 sample_size = 4
 
 
@@ -57,13 +57,13 @@ def index_files(db, paths):
         path_resolved = path.resolve()
         with path.open(mode='rb') as f:
             f_stat = os.fstat(f.fileno())
-            file_array = db.get_file_array(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name)
+            file_array = db.get_file_array(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, sample_size)
             if file_array:
                 logger.debug('File is up-to-date: %s', path)
             else:
                 logger.info('Indexing file: %s', path)
                 file_array = construct_file_array(f)
-                db.set_file_array(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, file_array)
+                db.set_file_array(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, sample_size, file_array)
 
 
 def filter_files(db, paths, expressions):
@@ -71,18 +71,18 @@ def filter_files(db, paths, expressions):
         path_resolved = path.resolve()
         with path.open(mode='rb') as f:
             f_stat = os.fstat(f.fileno())
-            file_array = db.get_file_array(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name)
+            file_array = db.get_file_array(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, sample_size)
             if not file_array:
                 logger.debug('Indexing file: %s', path)
                 file_array = construct_file_array(f)
-                db.set_file_array(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, file_array)
+                db.set_file_array(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, sample_size, file_array)
             match_array = construct_match_array(len(file_array), expressions)
             if array_is_subset(match_array, file_array):
                 yield path
 
 
-def construct_match_array(bytesize, expressions):
-    match_array = bytearray(bytesize)
+def construct_match_array(array_bytesize, expressions, sample_size):
+    match_array = bytearray(array_bytesize)
     for expr in expressions:
         assert isinstance(expr, str)
         expr_bytes = expr.lower().encode('utf-8')
@@ -95,8 +95,13 @@ def array_is_subset(match_array, file_array):
     return all((cf & cm) == cm for cm, cf in zip(match_array, file_array))
 
 
-def construct_file_array(raw_stream):
-    raise Exception('NIY')
+def construct_file_array(raw_stream, array_bytesize, sample_size):
+    file_array = bytearray(array_bytesize)
+    for line in raw_stream:
+        assert isinstance(line, bytes)
+        line = line.rstrip()
+        bloom_index_func(file_array, line, sample_size)
+    return bytes(file_array)
 
 
 def setup_logging():
