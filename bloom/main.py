@@ -78,7 +78,7 @@ def filter_files(db, paths, expressions, array_bytesize=default_array_bytesize):
                 logger.debug('Indexing file: %s', path)
                 file_array = construct_file_array(f, array_bytesize=array_bytesize, sample_size=sample_size)
                 db.set_file_array(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, sample_size, file_array)
-            match_array = construct_match_array(len(file_array), expressions)
+            match_array = construct_match_array(len(file_array), expressions, sample_size=sample_size)
             if array_is_subset(match_array, file_array):
                 yield path
 

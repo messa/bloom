@@ -66,3 +66,13 @@ def test_index_files(temp_dir, db):
     assert row1[1].hex() == '8420048122080262a4041907386011a4'
     assert row2[0] == f"{p2}:{p2.stat().st_size}:{p2.stat().st_mtime}:fnv1a_64:4"
     assert row2[1].hex() == '108284100a0402c0004c004246080000'
+
+
+def test_filter_files(temp_dir, db):
+    p1 = temp_dir / 'one.txt'
+    p1.write_bytes(b'Lorem ipsum dolor sit amet.\nThis is second line.\n')
+    p2 = temp_dir / 'two.txt.gz'
+    p2.write_bytes(gzip.compress(b'This is a compressed file.\n'))
+    assert list(filter_files(db, [p1, p2], ['This'])) == [p1, p2]
+    assert list(filter_files(db, [p1, p2], ['compressed'])) == [p2]
+    assert list(filter_files(db, [p1, p2], ['nothing'])) == []
