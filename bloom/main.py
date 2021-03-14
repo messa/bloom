@@ -123,6 +123,7 @@ def construct_file_array(raw_stream, array_bytesize, sample_size):
     for line in stream:
         assert isinstance(line, bytes)
         line = line.rstrip()
+        line = line.decode('utf-8').lower().encode('utf-8')
         bloom_index_func(file_array, line, sample_size)
     return bytes(file_array)
 

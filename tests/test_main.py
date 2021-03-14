@@ -63,9 +63,9 @@ def test_index_files(temp_dir, db):
     cur.execute('SELECT key, array FROM bloom_files_v1')
     row1, row2 = sorted(cur.fetchall())
     assert row1[0] == f"{p1}:{p1.stat().st_size}:{p1.stat().st_mtime}:fnv1a_64:4"
-    assert row1[1].hex() == '8420048122080262a4041907386011a4'
+    assert row1[1].hex() == '8420048120280262a6041907386011a4'
     assert row2[0] == f"{p2}:{p2.stat().st_size}:{p2.stat().st_mtime}:fnv1a_64:4"
-    assert row2[1].hex() == '108284100a0402c0004c004246080000'
+    assert row2[1].hex() == '10828410080402c0024c004246080000'
 
 
 def test_filter_files(temp_dir, db):

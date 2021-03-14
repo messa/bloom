@@ -40,7 +40,7 @@ class Database:
         cur.execute('SELECT array FROM bloom_files_v1 WHERE key=?', (key, ))
         row = cur.fetchone()
         if row:
-            cur.execute('UPDATE array SET last_accessed=? WHERE key=?', (int(time()), key))
+            cur.execute('UPDATE bloom_files_v1 SET last_accessed=? WHERE key=?', (int(time()), key))
         self._conn.commit()
         return row[0] if row else None
 
