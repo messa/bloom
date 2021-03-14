@@ -54,7 +54,7 @@ def bloom_main():
         db.close()
 
 
-def index_files(db, paths):
+def index_files(db, paths, array_bytesize=default_array_bytesize):
     for path in paths:
         path_resolved = path.resolve()
         with path.open(mode='rb') as f:
@@ -64,11 +64,11 @@ def index_files(db, paths):
                 logger.debug('File is up-to-date: %s', path)
             else:
                 logger.info('Indexing file: %s', path)
-                file_array = construct_file_array(f)
+                file_array = construct_file_array(f, array_bytesize=array_bytesize, sample_size=sample_size)
                 db.set_file_array(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, sample_size, file_array)
 
 
-def filter_files(db, paths, expressions):
+def filter_files(db, paths, expressions, array_bytesize=default_array_bytesize):
     for path in paths:
         path_resolved = path.resolve()
         with path.open(mode='rb') as f:
@@ -76,7 +76,7 @@ def filter_files(db, paths, expressions):
             file_array = db.get_file_array(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, sample_size)
             if not file_array:
                 logger.debug('Indexing file: %s', path)
-                file_array = construct_file_array(f)
+                file_array = construct_file_array(f, array_bytesize=array_bytesize, sample_size=sample_size)
                 db.set_file_array(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, sample_size, file_array)
             match_array = construct_match_array(len(file_array), expressions)
             if array_is_subset(match_array, file_array):
