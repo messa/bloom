@@ -55,7 +55,7 @@ static void insert_bloom_fnv1a_32(
     if (array == NULL || data == NULL) return;
     if (dataSize < sampleSize) return;
     const Py_ssize_t arrayBitsize = arraySize * 8;
-    const Py_ssize_t offsetEnd = dataSize - sampleSize;
+    const Py_ssize_t offsetEnd = dataSize - sampleSize + 1;
     for (Py_ssize_t offset = 0; offset < offsetEnd; ++offset) {
         const uint32_t h = fnv1a_32(data + offset, sampleSize) % arrayBitsize;
         array[h / 8] |= 1 << (h % 8);
@@ -89,7 +89,7 @@ static void insert_bloom_fnv1a_64(
     if (array == NULL || data == NULL) return;
     if (dataSize < sampleSize) return;
     const Py_ssize_t arrayBitsize = arraySize * 8;
-    const Py_ssize_t offsetEnd = dataSize - sampleSize;
+    const Py_ssize_t offsetEnd = dataSize - sampleSize + 1;
     for (Py_ssize_t offset = 0; offset < offsetEnd; ++offset) {
         const uint64_t h = fnv1a_64(data + offset, sampleSize) % arrayBitsize;
         array[h / 8] |= 1 << (h % 8);

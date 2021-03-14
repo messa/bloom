@@ -85,13 +85,13 @@ def _test_insert_bloom_fnv1a_32(insert_bloom_fnv1a_32):
     array = bytearray(8)
     assert array.hex() == '0000000000000000'
     insert_bloom_fnv1a_32(array, b'ello', 4)
-    assert array.hex() == '0000000000000000'
+    assert array.hex() == '0000200000000000'
     insert_bloom_fnv1a_32(array, b'hello', 4)
-    assert array.hex() == '0000000040000000'
+    assert array.hex() == '0000200040000000'
     insert_bloom_fnv1a_32(array, b'hello', 4)
-    assert array.hex() == '0000000040000000'
+    assert array.hex() == '0000200040000000'
     insert_bloom_fnv1a_32(array, b'Lorem ipsum dolor sit amet', 4)
-    assert array.hex() == 'a028180168600786'
+    assert array.hex() == 'a428380168600786'
 
 
 def _performance_bloom(func):
@@ -129,10 +129,10 @@ def _test_insert_bloom_fnv1a_64(insert_bloom_fnv1a_64):
     array = bytearray(8)
     assert array.hex() == '0000000000000000'
     insert_bloom_fnv1a_64(array, b'ello', 4)
-    assert array.hex() == '0000000000000000'
+    assert array.hex() == '0000200000000000'
     insert_bloom_fnv1a_64(array, b'hello', 4)
-    assert array.hex() == '0000000040000000'
+    assert array.hex() == '0000200040000000'
     insert_bloom_fnv1a_64(array, b'hello', 4)
-    assert array.hex() == '0000000040000000'
+    assert array.hex() == '0000200040000000'
     insert_bloom_fnv1a_64(array, b'Lorem ipsum dolor sit amet', 4)
-    assert array.hex() == '80200d8768681286'
+    assert array.hex() == '84202d8768681286'
