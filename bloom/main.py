@@ -1,5 +1,7 @@
 from argparse import ArgumentParser
+import gzip
 from logging import getLogger
+import lzma
 import os
 from pathlib import Path
 import sys
@@ -96,8 +98,29 @@ def array_is_subset(match_array, file_array):
 
 
 def construct_file_array(raw_stream, array_bytesize, sample_size):
+    assert raw_stream.tell() == 0
+    header = raw_stream.read(20)
+    raw_stream.seek(0)
+    assert raw_stream.tell() == 0
+    if header.startswith(bytes.fromhex('1f8b')):
+        logger.debug('gzip compression detected')
+        stream = gzip.open(raw_stream, mode='rb')
+    elif header.startswith(bytes.fromhex('28b52ffd')):
+        logger.debug('zstd compression detected')
+        raise Exception('zstd decompression not implemented')
+    elif header.startswith(bytes.fromhex('FD377A585A00')):
+        logger.debug('xz compression detected')
+        stream = lzma.open(raw_stream, mode='rb')
+    else:
+        try:
+            header.decode('utf-8')
+        except UnicodeDecodeError:
+            logger.warning('No compression detected, but file header is not utf-8? %r', header)
+        else:
+            logger.debug('No compression detected')
+        stream = raw_stream
     file_array = bytearray(array_bytesize)
-    for line in raw_stream:
+    for line in stream:
         assert isinstance(line, bytes)
         line = line.rstrip()
         bloom_index_func(file_array, line, sample_size)
