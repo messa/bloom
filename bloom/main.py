@@ -74,12 +74,10 @@ def filter_files(db, paths, expressions):
             file_array = db.get_file_array(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name)
             if not file_array:
                 logger.debug('Indexing file: %s', path)
-                file_array = compute_file_bloom_array(f)
+                file_array = construct_file_array(f)
                 db.set_file_array(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, file_array)
             match_array = construct_match_array(len(file_array), expressions)
-            assert len(match_array) == len(file_array)
-            have_match = all((cf & cm) == cm for cm, cf in zip(match_array, file_array))
-            if have_match:
+            if array_is_subset(match_array, file_array):
                 yield path
 
 
@@ -92,7 +90,12 @@ def construct_match_array(bytesize, expressions):
     return bytes(match_array)
 
 
-def compute_file_bloom_array(stream):
+def array_is_subset(match_array, file_array):
+    assert len(match_array) == len(file_array)
+    return all((cf & cm) == cm for cm, cf in zip(match_array, file_array))
+
+
+def construct_file_array(raw_stream):
     raise Exception('NIY')
 
 
