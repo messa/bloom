@@ -7,6 +7,12 @@ logger = getLogger(__name__)
 
 
 def open_database(db_path):
+    if not db_path.parent.is_dir():
+        if not db_path.parent.parent.is_dir():
+            logger.info('Creating directory %s', db_path.parent.parent)
+            db_path.parent.parent.mkdir()
+        logger.info('Creating directory %s', db_path.parent)
+        db_path.parent.mkdir()
     conn = sqlite3.connect(db_path)
     db = Database(conn)
     db.init()
