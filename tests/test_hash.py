@@ -84,6 +84,8 @@ def test_insert_bloom_fnv1a_32_default():
 def _test_insert_bloom_fnv1a_32(insert_bloom_fnv1a_32):
     array = bytearray(8)
     assert array.hex() == '0000000000000000'
+    insert_bloom_fnv1a_32(array, b'ello', 4)
+    assert array.hex() == '0000000000000000'
     insert_bloom_fnv1a_32(array, b'hello', 4)
     assert array.hex() == '0000000040000000'
     insert_bloom_fnv1a_32(array, b'hello', 4)
@@ -125,6 +127,8 @@ def test_insert_bloom_fnv1a_64_default():
 
 def _test_insert_bloom_fnv1a_64(insert_bloom_fnv1a_64):
     array = bytearray(8)
+    assert array.hex() == '0000000000000000'
+    insert_bloom_fnv1a_64(array, b'ello', 4)
     assert array.hex() == '0000000000000000'
     insert_bloom_fnv1a_64(array, b'hello', 4)
     assert array.hex() == '0000000040000000'

@@ -55,28 +55,32 @@ def bloom_main():
 def index_files(db, paths):
     for path in paths:
         path_resolved = path.resolve()
-        file_array = db.get_file_array(path_resolved, hash_func_name)
-        if file_array:
-            logger.debug('File is up-to-date: %s', path)
-        else:
-            logger.info('Indexing file: %s', path)
-            file_array = compute_file_bloom_array(path)
-            db.set_file_array(path_resolved, file_array)
+        with path.open(mode='rb') as f:
+            f_stat = os.fstat(f.fileno())
+            file_array = db.get_file_array(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name)
+            if file_array:
+                logger.debug('File is up-to-date: %s', path)
+            else:
+                logger.info('Indexing file: %s', path)
+                file_array = compute_file_bloom_array(f)
+                db.set_file_array(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, file_array)
 
 
 def filter_files(db, paths, expressions):
     for path in file_paths:
         path_resolved = path.resolve()
-        file_array = db.get_file_array(path_resolved, hash_func_name)
-        if not file_array:
-            logger.debug('Indexing file: %s', path)
-            file_array = compute_file_bloom_array(path)
-            db.set_file_array(path_resolved, file_array)
-        match_array = construct_match_array(len(file_array), expressions)
-        assert len(match_array) == len(file_array)
-        have_match = all((cf & cm) == cm for cm, cf in zip(match_array, file_array))
-        if have_match:
-            yield path
+        with path.open(mode='rb') as f:
+            f_stat = os.fstat(f.fileno())
+            file_array = db.get_file_array(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name)
+            if not file_array:
+                logger.debug('Indexing file: %s', path)
+                file_array = compute_file_bloom_array(f)
+                db.set_file_array(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, file_array)
+            match_array = construct_match_array(len(file_array), expressions)
+            assert len(match_array) == len(file_array)
+            have_match = all((cf & cm) == cm for cm, cf in zip(match_array, file_array))
+            if have_match:
+                yield path
 
 
 def construct_match_array(bytesize, expressions):

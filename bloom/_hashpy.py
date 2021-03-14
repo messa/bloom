@@ -34,6 +34,7 @@ def insert_bloom(hash_func, array, data, sample_size):
     bytesize = len(array)
     for offset in range(len(data) - sample_size):
         sample = data[offset:offset + sample_size]
+        assert len(sample) == sample_size
         h = hash_func(sample) % bitsize
         array[h // 8] |= 1 << (h % 8)
 
