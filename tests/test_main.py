@@ -1,12 +1,13 @@
 import gzip
 import lzma
 from pytest import fixture
+import zlib
 
 from bloom.main import construct_match_array, array_is_subset, construct_file_array, index_files, filter_files, open_database
 
 
 def test_construct_match_array():
-    array = construct_match_array(16, ['hello', 'world'], sample_size=4)
+    array = construct_match_array(16, ['hello', 'world'], sample_sizes=[4])
     assert isinstance(array, bytes)
     assert array.hex() == '00002000600000000000000000001000'
 
@@ -23,7 +24,7 @@ def test_construct_file_array_simple(temp_dir):
     p = temp_dir / 'one.txt'
     p.write_text('hello\nworld\n')
     with p.open(mode='rb') as f:
-        array = construct_file_array(f, array_bytesize=16, sample_size=4)
+        array = construct_file_array(f, array_bytesize=16, sample_sizes=[4])
     assert isinstance(array, bytes)
     assert array.hex() == '00002000600000000000000000001000'
 
@@ -33,7 +34,7 @@ def test_construct_file_array_gzip(temp_dir):
     with gzip.open(p, mode='wb') as f:
         f.write(b'hello\nworld\n')
     with p.open(mode='rb') as f:
-        array = construct_file_array(f, array_bytesize=16, sample_size=4)
+        array = construct_file_array(f, array_bytesize=16, sample_sizes=[4])
     assert isinstance(array, bytes)
     assert array.hex() == '00002000600000000000000000001000'
 
@@ -43,7 +44,7 @@ def test_construct_file_array_xz(temp_dir):
     with lzma.open(p, mode='wb') as f:
         f.write(b'hello\nworld\n')
     with p.open(mode='rb') as f:
-        array = construct_file_array(f, array_bytesize=16, sample_size=4)
+        array = construct_file_array(f, array_bytesize=16, sample_sizes=[4])
     assert isinstance(array, bytes)
     assert array.hex() == '00002000600000000000000000001000'
 
@@ -60,12 +61,12 @@ def test_index_files(temp_dir, db):
     p2.write_bytes(gzip.compress(b'This is a compressed file.\n'))
     index_files(db, [p1, p2], array_bytesize=16)
     cur = db._conn.cursor()
-    cur.execute('SELECT key, array FROM bloom_files_v1')
+    cur.execute('SELECT key, array FROM bloom_files_v2')
     row1, row2 = sorted(cur.fetchall())
-    assert row1[0] == f"{p1}:{p1.stat().st_size}:{p1.stat().st_mtime}:fnv1a_64:4"
-    assert row1[1].hex() == '8420048120280262a6041907386011a4'
-    assert row2[0] == f"{p2}:{p2.stat().st_size}:{p2.stat().st_mtime}:fnv1a_64:4"
-    assert row2[1].hex() == '10828410080402c0024c004246080000'
+    assert row1[0] == f"{p1}:{p1.stat().st_size}:{p1.stat().st_mtime}:fnv1a_64:4,5,6"
+    assert zlib.decompress(row1[1]).hex() == '97e126c173ff9373a75d1967f97219ec'
+    assert row2[0] == f"{p2}:{p2.stat().st_size}:{p2.stat().st_mtime}:fnv1a_64:4,5,6"
+    assert zlib.decompress(row2[1]).hex() == '12e3c6f14a0792e8836c194a4e8f00e0'
 
 
 def test_filter_files(temp_dir, db):
