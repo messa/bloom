@@ -66,6 +66,7 @@ def index_files(db, paths, array_bytesize=default_array_bytesize):
             else:
                 logger.info('Indexing file: %s', path)
                 file_array = construct_file_array(f, array_bytesize=array_bytesize, sample_sizes=sample_sizes)
+                logger.debug('Bloom array stats: %.1f %% filled', 100 * count_ones(file_array) / (len(file_array) * 8))
                 db.set_file_array(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, sample_sizes, file_array)
 
 
