@@ -25,7 +25,7 @@ def bloom_main():
     p.add_argument('--verbose', '-v', action='store_true')
     p.add_argument('--db', help='path to database file')
     p.add_argument('--file', '-f', action='append', help='file to process')
-    p.add_argument('--index', help='index only, do not perform search')
+    p.add_argument('--index', action='store_true', help='index only, do not perform search')
     p.add_argument('expression', nargs='*')
     args = p.parse_args()
     setup_logging(args.verbose)
