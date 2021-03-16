@@ -9,7 +9,7 @@ Compressed files are automatically decompressed before indexing.
 List of possibly matching files is printed to standard output.
 If the `--verbose` (or `-v`) option is passed on command line, debug and statistics messages is printed to standard error output.
 
-```
+```shell
 $ ls -1
 mail.log
 mail.log.1
@@ -23,3 +23,12 @@ mail.log.1:5
 ```
 
 The index data is stored in a SQLite database, default path is `~/.cache/bloom/db`.
+
+
+Installation
+------------
+
+```shell
+$ python3 -m pip install https://github.com/messa/bloom/archive/main.zip
+```
+
