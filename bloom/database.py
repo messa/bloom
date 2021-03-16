@@ -14,7 +14,8 @@ def open_database(db_path):
             db_path.parent.parent.mkdir()
         logger.info('Creating directory %s', db_path.parent)
         db_path.parent.mkdir()
-    conn = sqlite3.connect(db_path)
+    conn = sqlite3.connect(db_path, timeout=30)
+    conn.execute('pragma journal_mode=wal')
     db = Database(conn)
     db.init()
     return db
