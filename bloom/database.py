@@ -37,7 +37,6 @@ class Database:
                 key TEXT PRIMARY KEY,
                 path TEXT,
                 created INTEGER,
-                last_accessed INTEGER,
                 array BLOB
             )
         ''')
@@ -47,12 +46,8 @@ class Database:
         sample_sizes_str = ','.join(str(i) for i in sample_sizes)
         key = f"{path}:{size}:{mtime}:{version}:{sample_sizes_str}"
         cur = self._conn.cursor()
-        cur.execute('SELECT array, last_accessed FROM bloom_files_v2 WHERE key=?', (key, ))
+        cur.execute('SELECT array FROM bloom_files_v2 WHERE key=?', (key, ))
         row = cur.fetchone()
-        if row:
-            if abs(time() - row[1]) > 24 * 3600:
-                # do not update every time, keep last_accessed accurate to 24 h
-                cur.execute('UPDATE bloom_files_v2 SET last_accessed=? WHERE key=?', (int(time()), key))
         self._conn.commit()
         return zlib.decompress(row[0]) if row else None
 
@@ -64,12 +59,12 @@ class Database:
         cur = self._conn.cursor()
         # The upsert syntax works in sqlite since 3.24.0, but it seems some Python installations have older version
         #cur.execute('''
-        #    INSERT INTO bloom_files_v1 (key, created, last_accessed, array) VALUES (?, ?, ?, ?)
-        #    ON CONFLICT (key) DO UPDATE SET created=?, last_accessed=?, array=?
-        #''', (key, now, now, array, now, now, array))
+        #    INSERT INTO bloom_files_v1 (key, created, array) VALUES (?, ?, ?)
+        #    ON CONFLICT (key) DO UPDATE SET created=?, array=?
+        #''', (key, now, array, now, array))
         # So let's do DELETE + INSERT instead :)
         cur.execute('DELETE FROM bloom_files_v2 WHERE path=?', (str(path), ))
         cur.execute('''
-            INSERT INTO bloom_files_v2 (key, path, created, last_accessed, array) VALUES (?, ?, ?, ?, ?)
-        ''', (key, str(path), now, now, zlib.compress(array)))
+            INSERT INTO bloom_files_v2 (key, path, created, array) VALUES (?, ?, ?, ?)
+        ''', (key, str(path), now, zlib.compress(array)))
         self._conn.commit()
