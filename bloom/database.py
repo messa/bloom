@@ -47,10 +47,12 @@ class Database:
         sample_sizes_str = ','.join(str(i) for i in sample_sizes)
         key = f"{path}:{size}:{mtime}:{version}:{sample_sizes_str}"
         cur = self._conn.cursor()
-        cur.execute('SELECT array FROM bloom_files_v2 WHERE key=?', (key, ))
+        cur.execute('SELECT array, last_accessed FROM bloom_files_v2 WHERE key=?', (key, ))
         row = cur.fetchone()
         if row:
-            cur.execute('UPDATE bloom_files_v2 SET last_accessed=? WHERE key=?', (int(time()), key))
+            if abs(time() - row[1]) > 24 * 3600:
+                # do not update every time, keep last_accessed accurate to 24 h
+                cur.execute('UPDATE bloom_files_v2 SET last_accessed=? WHERE key=?', (int(time()), key))
         self._conn.commit()
         return zlib.decompress(row[0]) if row else None
 
