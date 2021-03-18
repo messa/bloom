@@ -67,6 +67,8 @@ class Database:
         sample_sizes_str = ','.join(str(i) for i in sample_sizes)
         key = f"{path}:{size}:{mtime}:{version}:{sample_sizes_str}"
         now = int(time())
+        compressed_array = zlib.compress(array)
+        logger.debug('Array compression: %.2f kB -> %.2f kB', len(array) / 1024, len(compressed_array) / 1024)
         cur = self._connect().cursor()
         # The upsert syntax works in sqlite since 3.24.0, but it seems some Python installations have older version
         #cur.execute('''
@@ -77,5 +79,5 @@ class Database:
         cur.execute('DELETE FROM bloom_files_v2 WHERE path=?', (str(path), ))
         cur.execute('''
             INSERT INTO bloom_files_v2 (key, path, created, array) VALUES (?, ?, ?, ?)
-        ''', (key, str(path), now, zlib.compress(array)))
+        ''', (key, str(path), now, compressed_array))
         self._connection.commit()
