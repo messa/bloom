@@ -40,7 +40,7 @@ class Database:
                 array BLOB
             )
         ''')
-        self._conn.commit()
+        self._conn.rollback()
 
     def get_file_array(self, path, size, mtime, version, sample_sizes):
         sample_sizes_str = ','.join(str(i) for i in sample_sizes)
