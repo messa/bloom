@@ -1,5 +1,5 @@
 import os
-from pytest import fixture
+from pytest import fixture, mark
 from time import monotonic as monotime
 
 
@@ -14,25 +14,8 @@ def hash_module(request):
     return hash_mod
 
 
-def test_fnv1a_32_python():
-    from bloom._hashpy import fnv1a_32
-    _test_fnv1a_32(fnv1a_32)
-    _performance_hash(fnv1a_32)
-
-
-def test_fnv1a_32_c():
-    from bloom._hashc import fnv1a_32
-    _test_fnv1a_32(fnv1a_32)
-    _performance_hash(fnv1a_32)
-
-
-def test_fnv1a_32_default():
-    from bloom.hash import fnv1a_32
-    _test_fnv1a_32(fnv1a_32)
-    _performance_hash(fnv1a_32)
-
-
-def _test_fnv1a_32(fnv1a_32):
+def test_fnv1a_32(hash_module):
+    fnv1a_32 = hash_module.fnv1a_32
     assert fnv1a_32(b'') == 2166136261
     assert fnv1a_32(b'hello') == 1335831723
     # test some known collisions
@@ -40,7 +23,9 @@ def _test_fnv1a_32(fnv1a_32):
     assert fnv1a_32(b'declinate') == fnv1a_32(b'macallums')
 
 
-def _performance_hash(func):
+@mark.parametrize('algo', ['fnv1a_32', 'fnv1a_64'])
+def test_hash_performance(hash_module, algo):
+    func = getattr(hash_module, algo)
     t0 = monotime()
     total_bytes = 0
     for i in range(50):
@@ -52,48 +37,14 @@ def _performance_hash(func):
     print(f"{func} performance: {mb_per_s:.2f} MB/s")
 
 
-def test_fnv1a_64_python():
-    from bloom._hashpy import fnv1a_64
-    _test_fnv1a_64(fnv1a_64)
-    _performance_hash(fnv1a_64)
-
-
-def test_fnv1a_64_c():
-    from bloom._hashc import fnv1a_64
-    _test_fnv1a_64(fnv1a_64)
-    _performance_hash(fnv1a_64)
-
-
-def test_fnv1a_64_default():
-    from bloom.hash import fnv1a_64
-    _test_fnv1a_64(fnv1a_64)
-    _performance_hash(fnv1a_64)
-
-
-def _test_fnv1a_64(fnv1a_64):
+def test_fnv1a_64(hash_module):
+    fnv1a_64 = hash_module.fnv1a_64
     assert fnv1a_64(b'') == 14695981039346656037
     assert fnv1a_64(b'hello') == 11831194018420276491
 
 
-def test_insert_bloom_fnv1a_32_python():
-    from bloom._hashpy import insert_bloom_fnv1a_32
-    _test_insert_bloom_fnv1a_32(insert_bloom_fnv1a_32)
-    _performance_bloom(insert_bloom_fnv1a_32)
-
-
-def test_insert_bloom_fnv1a_32_c():
-    from bloom._hashc import insert_bloom_fnv1a_32
-    _test_insert_bloom_fnv1a_32(insert_bloom_fnv1a_32)
-    _performance_bloom(insert_bloom_fnv1a_32)
-
-
-def test_insert_bloom_fnv1a_32_default():
-    from bloom.hash import insert_bloom_fnv1a_32
-    _test_insert_bloom_fnv1a_32(insert_bloom_fnv1a_32)
-    _performance_bloom(insert_bloom_fnv1a_32)
-
-
-def _test_insert_bloom_fnv1a_32(insert_bloom_fnv1a_32):
+def test_insert_bloom_fnv1a_32(hash_module):
+    insert_bloom_fnv1a_32 = hash_module.insert_bloom_fnv1a_32
     array = bytearray(8)
     assert array.hex() == '0000000000000000'
     insert_bloom_fnv1a_32(array, b'ello', 4)
@@ -106,7 +57,9 @@ def _test_insert_bloom_fnv1a_32(insert_bloom_fnv1a_32):
     assert array.hex() == 'a428380168600786'
 
 
-def _performance_bloom(func):
+@mark.parametrize('algo', ['insert_bloom_fnv1a_32', 'insert_bloom_fnv1a_64'])
+def test_bloom_performance_bloom(hash_module, algo):
+    func = getattr(hash_module, algo)
     t0 = monotime()
     total_bytes = 0
     array = bytearray(2**16)
@@ -119,25 +72,8 @@ def _performance_bloom(func):
     print(f"{func} performance: {mb_per_s:.2f} MB/s")
 
 
-def test_insert_bloom_fnv1a_64_python():
-    from bloom._hashpy import insert_bloom_fnv1a_64
-    _test_insert_bloom_fnv1a_64(insert_bloom_fnv1a_64)
-    _performance_bloom(insert_bloom_fnv1a_64)
-
-
-def test_insert_bloom_fnv1a_64_c():
-    from bloom._hashc import insert_bloom_fnv1a_64
-    _test_insert_bloom_fnv1a_64(insert_bloom_fnv1a_64)
-    _performance_bloom(insert_bloom_fnv1a_64)
-
-
-def test_insert_bloom_fnv1a_64_default():
-    from bloom.hash import insert_bloom_fnv1a_64
-    _test_insert_bloom_fnv1a_64(insert_bloom_fnv1a_64)
-    _performance_bloom(insert_bloom_fnv1a_64)
-
-
-def _test_insert_bloom_fnv1a_64(insert_bloom_fnv1a_64):
+def test_insert_bloom_fnv1a_64(hash_module):
+    insert_bloom_fnv1a_64 = hash_module.insert_bloom_fnv1a_64
     array = bytearray(8)
     assert array.hex() == '0000000000000000'
     insert_bloom_fnv1a_64(array, b'ello', 4)
