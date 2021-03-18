@@ -3,7 +3,7 @@ import lzma
 from pytest import fixture
 import zlib
 
-from bloom.main import construct_match_array, array_is_subset, construct_file_array, index_files, filter_files, open_database
+from bloom.main import construct_match_array, array_is_subset, construct_file_array, index_file, match_file, open_database
 
 
 def test_construct_match_array():
@@ -59,8 +59,9 @@ def test_index_files(temp_dir, db):
     p1.write_bytes(b'Lorem ipsum dolor sit amet.\nThis is second line.\n')
     p2 = temp_dir / 'two.txt.gz'
     p2.write_bytes(gzip.compress(b'This is a compressed file.\n'))
-    index_files(db, [p1, p2], array_bytesize=16)
-    cur = db._conn.cursor()
+    index_file(db, p1, array_bytesize=16)
+    index_file(db, p2, array_bytesize=16)
+    cur = db._connect().cursor()
     cur.execute('SELECT key, array FROM bloom_files_v2')
     row1, row2 = sorted(cur.fetchall())
     assert row1[0] == f"{p1}:{p1.stat().st_size}:{p1.stat().st_mtime}:fnv1a_64:4,5,6"
@@ -74,6 +75,7 @@ def test_filter_files(temp_dir, db):
     p1.write_bytes(b'Lorem ipsum dolor sit amet.\nThis is second line.\n')
     p2 = temp_dir / 'two.txt.gz'
     p2.write_bytes(gzip.compress(b'This is a compressed file.\n'))
+    filter_files = lambda db, paths, q: [p for p in paths if match_file(db, q, p)]
     assert list(filter_files(db, [p1, p2], ['This'])) == [p1, p2]
     assert list(filter_files(db, [p1, p2], ['compressed'])) == [p2]
     assert list(filter_files(db, [p1, p2], ['nothing'])) == []

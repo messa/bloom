@@ -1,9 +1,12 @@
 from argparse import ArgumentParser
+from functools import partial
 import gzip
 from logging import getLogger
 import lzma
+import multiprocessing
 import os
 from pathlib import Path
+from queue import Queue
 import sys
 
 from .database import open_database
@@ -12,7 +15,7 @@ from .hash import insert_bloom_fnv1a_64
 
 logger = getLogger(__name__)
 
-log_format = '%(asctime)s %(name)s %(levelname)5s: %(message)s'
+log_format = '%(asctime)s [%(process)d %(processName)s] %(name)s %(levelname)5s: %(message)s'
 
 hash_func_name = 'fnv1a_64'
 bloom_index_func = insert_bloom_fnv1a_64
@@ -39,54 +42,55 @@ def bloom_main():
         db_path = Path('~/.cache/bloom/db').expanduser()
     logger.debug('DB path: %s', db_path)
     db = open_database(db_path)
-    try:
-        if args.file:
-            # file paths were given on cmd line
-            file_paths = [Path(f) for f in args.file]
-        else:
-            # file paths are expected on stdin, one per line
-            file_paths = (Path(line.rstrip('\r\n')) for line in sys.stdin)
+    if args.file:
+        # file paths were given on cmd line
+        file_paths = [Path(f) for f in args.file]
+    else:
+        # file paths are expected on stdin, one per line
+        file_paths = (Path(line.rstrip('\r\n')) for line in sys.stdin)
+    with multiprocessing.Pool() as pool:
         if args.index:
-            index_files(db, file_paths)
+            for _ in pool.imap(partial(index_file, db), file_paths):
+                pass
         else:
-            for matching_path in filter_files(db, file_paths, args.expression):
-                print(matching_path, flush=True)
-    finally:
-        db.close()
+            for path_matched in pool.imap(partial(match_file, db, args.expression), file_paths):
+                if path_matched:
+                    print(path_matched, flush=True)
 
 
-def index_files(db, paths, array_bytesize=default_array_bytesize):
-    for path in paths:
-        path_resolved = path.resolve()
-        with path.open(mode='rb') as f:
-            f_stat = os.fstat(f.fileno())
-            file_array = db.get_file_array(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, sample_sizes)
-            if file_array:
-                logger.debug('File is up-to-date: %s', path)
-            else:
-                logger.info('Indexing file: %s', path)
-                file_array = construct_file_array(f, array_bytesize=array_bytesize, sample_sizes=sample_sizes)
-                logger.debug('Bloom array stats: %.1f %% filled', 100 * count_ones(file_array) / (len(file_array) * 8))
-                db.set_file_array(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, sample_sizes, file_array)
+def index_file(db, path, array_bytesize=default_array_bytesize):
+    assert isinstance(path, Path)
+    path_resolved = path.resolve()
+    with path.open(mode='rb') as f:
+        f_stat = os.fstat(f.fileno())
+        file_array = db.get_file_array(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, sample_sizes)
+        if file_array:
+            logger.debug('File is up-to-date: %s', path)
+        else:
+            logger.info('Indexing file: %s', path)
+            file_array = construct_file_array(f, array_bytesize=array_bytesize, sample_sizes=sample_sizes)
+            logger.debug('Bloom array stats: %.1f %% filled', 100 * count_ones(file_array) / (len(file_array) * 8))
+            db.set_file_array(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, sample_sizes, file_array)
 
 
-def filter_files(db, paths, expressions, array_bytesize=default_array_bytesize):
-    for path in paths:
-        path_resolved = path.resolve()
-        with path.open(mode='rb') as f:
-            f_stat = os.fstat(f.fileno())
-            file_array = db.get_file_array(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, sample_sizes)
-            if not file_array:
-                logger.debug('Indexing file: %s', path)
-                file_array = construct_file_array(f, array_bytesize=array_bytesize, sample_sizes=sample_sizes)
-                logger.debug('Bloom array stats: %.1f %% filled', 100 * count_ones(file_array) / (len(file_array) * 8))
-                db.set_file_array(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, sample_sizes, file_array)
-            match_array = construct_match_array(len(file_array), expressions, sample_sizes=sample_sizes)
-            if array_is_subset(match_array, file_array):
-                logger.debug('File possibly matching: %s', path)
-                yield path
-            else:
-                logger.debug('File does not match: %s', path)
+def match_file(db, expressions, path, array_bytesize=default_array_bytesize):
+    assert isinstance(path, Path)
+    path_resolved = path.resolve()
+    with path.open(mode='rb') as f:
+        f_stat = os.fstat(f.fileno())
+        file_array = db.get_file_array(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, sample_sizes)
+        if not file_array:
+            logger.debug('Indexing file: %s', path)
+            file_array = construct_file_array(f, array_bytesize=array_bytesize, sample_sizes=sample_sizes)
+            logger.debug('Bloom array stats: %.1f %% filled', 100 * count_ones(file_array) / (len(file_array) * 8))
+            db.set_file_array(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, sample_sizes, file_array)
+        match_array = construct_match_array(len(file_array), expressions, sample_sizes=sample_sizes)
+        if array_is_subset(match_array, file_array):
+            logger.debug('File possibly matching: %s', path)
+            return path
+        else:
+            logger.debug('File does not match: %s', path)
+            return None
 
 
 def count_ones(array):
