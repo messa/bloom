@@ -40,3 +40,11 @@ def insert_bloom(hash_func, array, data, sample_size):
 
 insert_bloom_fnv1a_32 = partial(insert_bloom, fnv1a_32)
 insert_bloom_fnv1a_64 = partial(insert_bloom, fnv1a_64)
+
+
+def count_ones(array):
+    ones = 0
+    for c in array:
+        for x in range(8):
+            ones += (c >> x) & 1
+    return ones

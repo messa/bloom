@@ -1,5 +1,17 @@
 import os
+from pytest import fixture
 from time import monotonic as monotime
+
+
+@fixture(params=['py', 'c', 'default'])
+def hash_module(request):
+    if request.param == 'py':
+        from bloom import _hashpy as hash_mod
+    elif request.param == 'c':
+        from bloom import _hashc as hash_mod
+    elif request.param == 'default':
+        from bloom import hash as hash_mod
+    return hash_mod
 
 
 def test_fnv1a_32_python():
@@ -136,3 +148,18 @@ def _test_insert_bloom_fnv1a_64(insert_bloom_fnv1a_64):
     assert array.hex() == '0000200040000000'
     insert_bloom_fnv1a_64(array, b'Lorem ipsum dolor sit amet', 4)
     assert array.hex() == '84202d8768681286'
+
+
+def test_count_ones(hash_module):
+    f = hash_module.count_ones
+    assert f(b'') == 0
+    assert f(b'\x00') == 0
+    assert f(b'\x01') == 1
+    assert f(b'\x02') == 1
+    assert f(b'\x03') == 2
+    assert f(b'\x0f') == 4
+    assert f(b'\x1f') == 5
+    assert f(b'\xf0') == 4
+    assert f(b'\xf1') == 5
+    assert f(b'\xff') == 8
+    assert f(b'\x00\xff\x00') == 8

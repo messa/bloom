@@ -11,7 +11,7 @@ import sys
 from time import monotonic as monotime
 
 from .database import open_database
-from .hash import insert_bloom_fnv1a_64
+from .hash import insert_bloom_fnv1a_64, count_ones
 
 
 logger = getLogger(__name__)
@@ -84,20 +84,13 @@ def match_file(db, expressions, path, array_bytesize=default_array_bytesize):
             file_array = construct_file_array(f, array_bytesize=array_bytesize, sample_sizes=sample_sizes)
             db.set_file_array(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, sample_sizes, file_array)
         match_array = construct_match_array(len(file_array), expressions, sample_sizes=sample_sizes)
+        pct_filled = 100 * count_ones(file_array) / (len(file_array) * 8)
         if array_is_subset(match_array, file_array):
-            logger.debug('File possibly matching: %s', path)
+            logger.debug('File possibly matching: %s (array %.1f %% filled)', path, pct_filled)
             return path
         else:
-            logger.debug('File does not match: %s', path)
+            logger.debug('File does not match: %s (array %.1f %% filled)', path, pct_filled)
             return None
-
-
-def count_ones(array):
-    ones = 0
-    for c in array:
-        for x in range(8):
-            ones += (c >> x) & 1
-    return ones
 
 
 def construct_match_array(array_bytesize, expressions, sample_sizes):

@@ -115,12 +115,26 @@ static PyObject* hashc_insert_bloom_fnv1a_64(PyObject *self, PyObject *args) {
     return Py_BuildValue("");
 }
 
+static PyObject* hashc_count_ones(PyObject *self, PyObject *args) {
+    const unsigned char *array;
+    Py_ssize_t arraySize;
+    if (!PyArg_ParseTuple(args, "s#", &array, &arraySize)) {
+        return NULL;
+    }
+    unsigned count = 0;
+    for (unsigned i = 0; i < arraySize; ++i) {
+        count += __builtin_popcount(array[i]);
+    }
+    return PyLong_FromUnsignedLong(count);
+}
+
 static PyMethodDef methods[] = {
     {"hello", hashc_hello, METH_VARARGS, "Sample function."},
     {"fnv1a_32", hashc_fnv1a_32, METH_VARARGS, "FNV-1A 32-bit version."},
     {"fnv1a_64", hashc_fnv1a_64, METH_VARARGS, "FNV-1A 64-bit version."},
     {"insert_bloom_fnv1a_32", hashc_insert_bloom_fnv1a_32, METH_VARARGS, "Update bloom filter array."},
     {"insert_bloom_fnv1a_64", hashc_insert_bloom_fnv1a_64, METH_VARARGS, "Update bloom filter array."},
+    {"count_ones", hashc_count_ones, METH_VARARGS, "Return number of bits set to 1."},
     {NULL, NULL, 0, NULL}
 };
 
