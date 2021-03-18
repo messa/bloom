@@ -48,6 +48,9 @@ class Database:
                 array BLOB
             )
         ''')
+        cur.execute('''
+            CREATE INDEX IF NOT EXISTS path ON bloom_files_v2 ( path )
+        ''')
         self._connection.commit()
 
     def get_file_array(self, path, size, mtime, version, sample_sizes):
