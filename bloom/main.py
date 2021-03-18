@@ -16,7 +16,7 @@ from .hash import insert_bloom_fnv1a_64
 
 logger = getLogger(__name__)
 
-log_format = '%(asctime)s [%(process)d %(processName)s] %(name)s %(levelname)5s: %(message)s'
+log_format = '%(asctime)s [%(process)d %(processName)17s] %(name)s %(levelname)5s: %(message)s'
 
 hash_func_name = 'fnv1a_64'
 bloom_index_func = insert_bloom_fnv1a_64
