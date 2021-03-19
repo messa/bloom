@@ -29,7 +29,6 @@ class Database:
     def _connect(self):
         if not self._connection:
             conn = sqlite3.connect(self._db_path, timeout=30)
-            conn.execute('pragma journal_mode=wal')
             self._connection = conn
         return self._connection
 
