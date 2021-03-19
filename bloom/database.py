@@ -41,34 +41,38 @@ class Database:
     def init(self):
         cur = self._connect().cursor()
         cur.execute('''
-            CREATE TABLE IF NOT EXISTS bloom_files_v2 (
-                key TEXT PRIMARY KEY,
+            CREATE TABLE IF NOT EXISTS bloom_files_v3 (
                 path TEXT,
+                key TEXT,
+                part INTEGER,
                 created INTEGER,
                 array BLOB
             )
         ''')
         cur.execute('''
-            CREATE INDEX IF NOT EXISTS path ON bloom_files_v2 ( path )
+            CREATE UNIQUE INDEX IF NOT EXISTS idx1 ON bloom_files_v3 ( path, key, part )
         ''')
         self._connection.commit()
 
-    def get_file_array(self, path, size, mtime, version, sample_sizes):
+    def get_file_arrays(self, path, size, mtime, version, sample_sizes):
         sample_sizes_str = ','.join(str(i) for i in sample_sizes)
-        key = f"{path}:{size}:{mtime}:{version}:{sample_sizes_str}"
+        key = f"{size}:{mtime}:{version}:{sample_sizes_str}"
         cur = self._connect().cursor()
-        cur.execute('SELECT array FROM bloom_files_v2 WHERE key=?', (key, ))
-        row = cur.fetchone()
+        cur.execute('SELECT part, array FROM bloom_files_v3 WHERE path=? AND key=?', (str(path), key))
+        rows = sorted(cur.fetchall())
         self._connection.rollback()
-        return zlib.decompress(row[0]) if row else None
+        return [zlib.decompress(row[1]) for row in rows]
 
-    def set_file_array(self, path, size, mtime, version, sample_sizes, array):
-        assert isinstance(array, bytes)
+    def set_file_arrays(self, path, size, mtime, version, sample_sizes, arrays):
+        assert all(isinstance(a, bytes) for a in arrays)
         sample_sizes_str = ','.join(str(i) for i in sample_sizes)
-        key = f"{path}:{size}:{mtime}:{version}:{sample_sizes_str}"
+        key = f"{size}:{mtime}:{version}:{sample_sizes_str}"
         now = int(time())
-        compressed_array = zlib.compress(array)
-        logger.debug('Array compression: %.2f kB -> %.2f kB', len(array) / 1024, len(compressed_array) / 1024)
+        compressed_arrays = [zlib.compress(a) for a in arrays]
+        logger.debug(
+            'Array compression: %.2f kB -> %.2f kB',
+            sum(len(a) for a in arrays) / 1024,
+            sum(len(a) for a in compressed_arrays) / 1024)
         cur = self._connect().cursor()
         # The upsert syntax works in sqlite since 3.24.0, but it seems some Python installations have older version
         #cur.execute('''
@@ -76,8 +80,9 @@ class Database:
         #    ON CONFLICT (key) DO UPDATE SET created=?, array=?
         #''', (key, now, array, now, array))
         # So let's do DELETE + INSERT instead :)
-        cur.execute('DELETE FROM bloom_files_v2 WHERE path=?', (str(path), ))
-        cur.execute('''
-            INSERT INTO bloom_files_v2 (key, path, created, array) VALUES (?, ?, ?, ?)
-        ''', (key, str(path), now, compressed_array))
+        cur.execute('DELETE FROM bloom_files_v3 WHERE path=?', (str(path), ))
+        for n, a in enumerate(compressed_arrays):
+            cur.execute('''
+                INSERT INTO bloom_files_v3 (path, key, part, created, array) VALUES (?, ?, ?, ?, ?)
+            ''', (str(path), key, n, now, a))
         self._connection.commit()

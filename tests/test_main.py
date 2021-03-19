@@ -62,12 +62,14 @@ def test_index_files(temp_dir, db):
     index_file(db, p1, array_bytesize=16)
     index_file(db, p2, array_bytesize=16)
     cur = db._connect().cursor()
-    cur.execute('SELECT key, array FROM bloom_files_v2')
+    cur.execute('SELECT path, key, array FROM bloom_files_v3')
     row1, row2 = sorted(cur.fetchall())
-    assert row1[0] == f"{p1}:{p1.stat().st_size}:{p1.stat().st_mtime}:fnv1a_64:4,5,6"
-    assert zlib.decompress(row1[1]).hex() == '97e126c173ff9373a75d1967f97219ec'
-    assert row2[0] == f"{p2}:{p2.stat().st_size}:{p2.stat().st_mtime}:fnv1a_64:4,5,6"
-    assert zlib.decompress(row2[1]).hex() == '12e3c6f14a0792e8836c194a4e8f00e0'
+    assert row1[0] == str(p1)
+    assert row1[1] == f"{p1.stat().st_size}:{p1.stat().st_mtime}:fnv1a_64:4,5,6"
+    assert zlib.decompress(row1[2]).hex() == '97e126c173ff9373a75d1967f97219ec'
+    assert row2[0] == str(p2)
+    assert row2[1] == f"{p2.stat().st_size}:{p2.stat().st_mtime}:fnv1a_64:4,5,6"
+    assert zlib.decompress(row2[2]).hex() == '12e3c6f14a0792e8836c194a4e8f00e0'
 
 
 def test_filter_files(temp_dir, db):

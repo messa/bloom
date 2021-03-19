@@ -64,13 +64,13 @@ def index_file(db, path, array_bytesize=default_array_bytesize):
     path_resolved = path.resolve()
     with path.open(mode='rb') as f:
         f_stat = os.fstat(f.fileno())
-        file_array = db.get_file_array(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, sample_sizes)
-        if file_array:
+        file_arrays = db.get_file_arrays(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, sample_sizes)
+        if file_arrays:
             logger.debug('File is up-to-date: %s', path)
         else:
             logger.info('Indexing file: %s', path)
-            file_array = construct_file_array(f, array_bytesize=array_bytesize, sample_sizes=sample_sizes)
-            db.set_file_array(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, sample_sizes, file_array)
+            file_arrays = [construct_file_array(f, array_bytesize=array_bytesize, sample_sizes=sample_sizes)]
+            db.set_file_arrays(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, sample_sizes, file_arrays)
 
 
 def match_file(db, expressions, path, array_bytesize=default_array_bytesize):
@@ -78,19 +78,23 @@ def match_file(db, expressions, path, array_bytesize=default_array_bytesize):
     path_resolved = path.resolve()
     with path.open(mode='rb') as f:
         f_stat = os.fstat(f.fileno())
-        file_array = db.get_file_array(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, sample_sizes)
-        if not file_array:
+        file_arrays = db.get_file_arrays(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, sample_sizes)
+        if not file_arrays:
             logger.debug('Indexing file: %s', path)
-            file_array = construct_file_array(f, array_bytesize=array_bytesize, sample_sizes=sample_sizes)
-            db.set_file_array(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, sample_sizes, file_array)
-        match_array = construct_match_array(len(file_array), expressions, sample_sizes=sample_sizes)
-        pct_filled = 100 * count_ones(file_array) / (len(file_array) * 8)
-        if array_is_subset(match_array, file_array):
-            logger.debug('File possibly matching: %s (array %.1f %% filled)', path, pct_filled)
-            return path
-        else:
-            logger.debug('File does not match: %s (array %.1f %% filled)', path, pct_filled)
-            return None
+            file_arrays = [construct_file_array(f, array_bytesize=array_bytesize, sample_sizes=sample_sizes)]
+            db.set_file_arrays(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, sample_sizes, file_arrays)
+        match_array = construct_match_array(len(file_arrays[0]), expressions, sample_sizes=sample_sizes)
+        arrays_filled = []
+        for file_array in file_arrays:
+            pct_filled = 100 * count_ones(file_array) / (len(file_array) * 8)
+            arrays_filled.append('{:.1f} %'.format(pct_filled))
+        for n, file_array in enumerate(file_arrays, start=1):
+            assert len(file_array) == len(match_array)
+            if array_is_subset(match_array, file_array):
+                logger.debug('File possibly matching: %s (arrays filled: %s)', path, ' '.join(arrays_filled))
+                return path
+        logger.debug('File does not match: %s (arrays filled: %s)', path, ' '.join(arrays_filled))
+        return None
 
 
 def construct_match_array(array_bytesize, expressions, sample_sizes):
