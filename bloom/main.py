@@ -21,6 +21,7 @@ log_format = '%(asctime)s [%(process)d %(processName)17s] %(name)s %(levelname)5
 hash_func_name = 'fnv1a_64'
 bloom_index_func = insert_bloom_fnv1a_64
 default_array_bytesize = 2**21
+array_full_threshold = float(os.environ.get('BLOOM_ARRAY_FULL_THRESHOLD') or 0.70)
 sample_sizes = [4, 5, 6]
 
 
@@ -147,7 +148,7 @@ def construct_file_arrays(raw_stream, array_bytesize, sample_sizes):
         except UnicodeDecodeError:
             line = line.lower()
         if n % 100000 == 0:
-            if not file_arrays or count_ones(bytes(file_arrays[-1])) >= array_bytesize * 8 * 0.75:
+            if not file_arrays or count_ones(bytes(file_arrays[-1])) >= array_bytesize * 8 * array_full_threshold:
                 file_array = bytearray(array_bytesize)
                 file_arrays.append(file_array)
         for sample_size in sample_sizes:
