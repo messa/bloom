@@ -146,8 +146,8 @@ def construct_file_arrays(raw_stream, array_bytesize, sample_sizes):
             line = line.decode('utf-8').lower().encode('utf-8')
         except UnicodeDecodeError:
             line = line.lower()
-        if n % 10000 == 0:
-            if not file_arrays or count_ones(file_arrays[-1]) >= array_bytesize * 0.75:
+        if n % 100000 == 0:
+            if not file_arrays or count_ones(bytes(file_arrays[-1])) >= array_bytesize * 0.75:
                 file_array = bytearray(array_bytesize)
                 file_arrays.append(file_array)
         for sample_size in sample_sizes:
