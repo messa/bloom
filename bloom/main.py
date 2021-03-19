@@ -69,7 +69,7 @@ def index_file(db, path, array_bytesize=default_array_bytesize):
             logger.debug('File is up-to-date: %s', path)
         else:
             logger.info('Indexing file: %s', path)
-            file_arrays = [construct_file_array(f, array_bytesize=array_bytesize, sample_sizes=sample_sizes)]
+            file_arrays = construct_file_arrays(f, array_bytesize=array_bytesize, sample_sizes=sample_sizes)
             db.set_file_arrays(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, sample_sizes, file_arrays)
 
 
@@ -81,7 +81,7 @@ def match_file(db, expressions, path, array_bytesize=default_array_bytesize):
         file_arrays = db.get_file_arrays(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, sample_sizes)
         if not file_arrays:
             logger.debug('Indexing file: %s', path)
-            file_arrays = [construct_file_array(f, array_bytesize=array_bytesize, sample_sizes=sample_sizes)]
+            file_arrays = construct_file_arrays(f, array_bytesize=array_bytesize, sample_sizes=sample_sizes)
             db.set_file_arrays(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, sample_sizes, file_arrays)
         match_array = construct_match_array(len(file_arrays[0]), expressions, sample_sizes=sample_sizes)
         arrays_filled = []
@@ -112,7 +112,7 @@ def array_is_subset(match_array, file_array):
     return all((cf & cm) == cm for cm, cf in zip(match_array, file_array))
 
 
-def construct_file_array(raw_stream, array_bytesize, sample_sizes):
+def construct_file_arrays(raw_stream, array_bytesize, sample_sizes):
     assert raw_stream.tell() == 0
     header = raw_stream.read(20)
     raw_stream.seek(0)
@@ -134,10 +134,11 @@ def construct_file_array(raw_stream, array_bytesize, sample_sizes):
         else:
             logger.debug('No compression detected')
         stream = raw_stream
-    file_array = bytearray(array_bytesize)
+    file_arrays = []
+    file_array = None
     t0 = monotime()
     total_bytes = 0
-    for line in stream:
+    for n, line in enumerate(stream):
         assert isinstance(line, bytes)
         total_bytes += len(line)
         line = line.rstrip()
@@ -145,15 +146,23 @@ def construct_file_array(raw_stream, array_bytesize, sample_sizes):
             line = line.decode('utf-8').lower().encode('utf-8')
         except UnicodeDecodeError:
             line = line.lower()
+        if n % 10000 == 0:
+            if not file_arrays or count_ones(file_arrays[-1]) >= array_bytesize * 0.75:
+                file_array = bytearray(array_bytesize)
+                file_arrays.append(file_array)
         for sample_size in sample_sizes:
             bloom_index_func(file_array, line, sample_size)
-    file_array = bytes(file_array)
+    del file_array
+    file_arrays = [bytes(a) for a in file_arrays]
     td = monotime() - t0
-    pct_filled = 100 * count_ones(file_array) / (len(file_array) * 8)
+    arrays_filled = []
+    for file_array in file_arrays:
+        pct_filled = 100 * count_ones(file_array) / (len(file_array) * 8)
+        arrays_filled.append('{:.1f} %'.format(pct_filled))
     logger.debug(
-        'Indexed %.2f MB in %.3f s, %.0f kB array %.1f %% filled',
-        total_bytes / 2**20, td, len(file_array) / 2**10, pct_filled)
-    return file_array
+        'Indexed %.2f MB in %.3f s, %.0f kB arrays filled: %s',
+        total_bytes / 2**20, td, len(file_arrays[0]) / 2**10, ' '.join(arrays_filled))
+    return file_arrays
 
 
 def setup_logging(verbose):
