@@ -48,9 +48,7 @@ class Database:
                 array BLOB
             )
         ''')
-        cur.execute('''
-            CREATE UNIQUE INDEX IF NOT EXISTS idx1 ON bloom_files_v3 ( path, key, part )
-        ''')
+        cur.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx1 ON bloom_files_v3 ( path, key, part )')
         self._connection.commit()
 
     def get_file_arrays(self, path, size, mtime, version, sample_sizes):
@@ -81,7 +79,7 @@ class Database:
         # So let's do DELETE + INSERT instead :)
         cur.execute('DELETE FROM bloom_files_v3 WHERE path=?', (str(path), ))
         for n, a in enumerate(compressed_arrays):
-            cur.execute('''
-                INSERT INTO bloom_files_v3 (path, key, part, created, array) VALUES (?, ?, ?, ?, ?)
-            ''', (str(path), key, n, now, a))
+            cur.execute(
+                'INSERT INTO bloom_files_v3 (path, key, part, created, array) VALUES (?, ?, ?, ?, ?)',
+                (str(path), key, n, now, a))
         self._connection.commit()
