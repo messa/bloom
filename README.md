@@ -7,7 +7,7 @@ Compressed files are automatically decompressed before indexing.
 
 `bloom` accepts list of files on standard input and searched phrase(s) as command line argument.
 List of possibly matching files is printed to standard output.
-If the `--verbose` (or `-v`) option is passed on command line, debug and statistics messages is printed to standard error output.
+If the `--verbose` (or `-v`) option is passed on command line, debug and statistics messages are printed to standard error output.
 
 ```shell
 $ ls -1
@@ -22,7 +22,8 @@ $ find -type f | bloom B3BC8A1F1D | xargs xzegrep -H -c B3BC8A1F1D
 mail.log.1:5
 ```
 
-The index data is stored in a SQLite database, default path is `~/.cache/bloom/db`.
+The index data is stored in a SQLite database file, default path is `~/.cache/bloom/db`.
+This path can be changed using command line option `--db` or environment variable `BLOOM_DB`.
 
 
 Installation
