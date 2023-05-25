@@ -34,7 +34,7 @@ def test_hash_performance(hash_module, algo):
         func(sample)
     td = monotime() - t0
     mb_per_s = total_bytes / td / 2**20
-    print(f"{func} performance: {mb_per_s:.2f} MB/s")
+    print(f"performance: {mb_per_s:.2f} MB/s", end=' ')
 
 
 def test_fnv1a_64(hash_module):
@@ -69,7 +69,7 @@ def test_bloom_performance_bloom(hash_module, algo):
         func(array, data, 4)
     td = monotime() - t0
     mb_per_s = total_bytes / td / 2**20
-    print(f"{func} performance: {mb_per_s:.2f} MB/s")
+    print(f"performance: {mb_per_s:.2f} MB/s", end=' ')
 
 
 def test_insert_bloom_fnv1a_64(hash_module):
