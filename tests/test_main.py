@@ -1,9 +1,17 @@
 import gzip
 import lzma
-from pytest import fixture
 import zlib
 
-from bloom.main import construct_match_array, array_is_subset, construct_file_arrays, index_file, match_file, open_database
+from pytest import fixture
+
+from bloom.main import (
+    array_is_subset,
+    construct_file_arrays,
+    construct_match_array,
+    index_file,
+    match_file,
+    open_database,
+)
 
 
 def test_construct_match_array():
@@ -24,7 +32,7 @@ def test_construct_file_arrays_simple(temp_dir):
     p = temp_dir / 'one.txt'
     p.write_text('hello\nworld\n')
     with p.open(mode='rb') as f:
-        array, = construct_file_arrays(f, array_bytesize=16, sample_sizes=[4])
+        (array,) = construct_file_arrays(f, array_bytesize=16, sample_sizes=[4])
     assert isinstance(array, bytes)
     assert array.hex() == '00002000600000000000000000001000'
 
@@ -34,7 +42,7 @@ def test_construct_file_arrays_gzip(temp_dir):
     with gzip.open(p, mode='wb') as f:
         f.write(b'hello\nworld\n')
     with p.open(mode='rb') as f:
-        array, = construct_file_arrays(f, array_bytesize=16, sample_sizes=[4])
+        (array,) = construct_file_arrays(f, array_bytesize=16, sample_sizes=[4])
     assert isinstance(array, bytes)
     assert array.hex() == '00002000600000000000000000001000'
 
@@ -44,7 +52,7 @@ def test_construct_file_arrays_xz(temp_dir):
     with lzma.open(p, mode='wb') as f:
         f.write(b'hello\nworld\n')
     with p.open(mode='rb') as f:
-        array, = construct_file_arrays(f, array_bytesize=16, sample_sizes=[4])
+        (array,) = construct_file_arrays(f, array_bytesize=16, sample_sizes=[4])
     assert isinstance(array, bytes)
     assert array.hex() == '00002000600000000000000000001000'
 
@@ -65,10 +73,10 @@ def test_index_files(temp_dir, db):
     cur.execute('SELECT path, key, array FROM bloom_files_v3')
     row1, row2 = sorted(cur.fetchall())
     assert row1[0] == str(p1)
-    assert row1[1] == f"{p1.stat().st_size}:{p1.stat().st_mtime}:fnv1a_64:4,5,6"
+    assert row1[1] == f'{p1.stat().st_size}:{p1.stat().st_mtime}:fnv1a_64:4,5,6'
     assert zlib.decompress(row1[2]).hex() == '97e126c173ff9373a75d1967f97219ec'
     assert row2[0] == str(p2)
-    assert row2[1] == f"{p2.stat().st_size}:{p2.stat().st_mtime}:fnv1a_64:4,5,6"
+    assert row2[1] == f'{p2.stat().st_size}:{p2.stat().st_mtime}:fnv1a_64:4,5,6'
     assert zlib.decompress(row2[2]).hex() == '12e3c6f14a0792e8836c194a4e8f00e0'
 
 
@@ -77,7 +85,10 @@ def test_filter_files(temp_dir, db):
     p1.write_bytes(b'Lorem ipsum dolor sit amet.\nThis is second line.\n')
     p2 = temp_dir / 'two.txt.gz'
     p2.write_bytes(gzip.compress(b'This is a compressed file.\n'))
-    filter_files = lambda db, paths, q: [p for p in paths if match_file(db, q, p)]
+
+    def filter_files(db, paths, q):
+        return [p for p in paths if match_file(db, q, p)]
+
     assert list(filter_files(db, [p1, p2], ['This'])) == [p1, p2]
     assert list(filter_files(db, [p1, p2], ['compressed'])) == [p2]
     assert list(filter_files(db, [p1, p2], ['nothing'])) == []

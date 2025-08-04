@@ -1,6 +1,7 @@
 import os
-from pytest import fixture, mark
 from time import monotonic as monotime
+
+from pytest import fixture, mark
 
 
 @fixture(params=['py', 'c', 'default'])
@@ -28,13 +29,13 @@ def test_hash_performance(hash_module, algo):
     func = getattr(hash_module, algo)
     t0 = monotime()
     total_bytes = 0
-    for i in range(50):
+    for _i in range(50):
         sample = os.urandom(2**14)
         total_bytes += len(sample)
         func(sample)
     td = monotime() - t0
     mb_per_s = total_bytes / td / 2**20
-    print(f"performance: {mb_per_s:.2f} MB/s", end=' ')
+    print(f'performance: {mb_per_s:.2f} MB/s', end=' ')
 
 
 def test_fnv1a_64(hash_module):
@@ -63,13 +64,13 @@ def test_bloom_performance_bloom(hash_module, algo):
     t0 = monotime()
     total_bytes = 0
     array = bytearray(2**16)
-    for i in range(50):
+    for _i in range(50):
         data = os.urandom(2**12)
         total_bytes += len(data)
         func(array, data, 4)
     td = monotime() - t0
     mb_per_s = total_bytes / td / 2**20
-    print(f"performance: {mb_per_s:.2f} MB/s", end=' ')
+    print(f'performance: {mb_per_s:.2f} MB/s', end=' ')
 
 
 def test_insert_bloom_fnv1a_64(hash_module):

@@ -1,8 +1,7 @@
-from logging import getLogger
 import sqlite3
-from time import time
 import zlib
-
+from logging import getLogger
+from time import time
 
 logger = getLogger(__name__)
 
@@ -21,7 +20,6 @@ def open_database(db_path):
 
 
 class Database:
-
     def __init__(self, db_path):
         self._db_path = db_path
         self._connection = None
@@ -39,7 +37,7 @@ class Database:
 
     def init(self):
         cur = self._connect().cursor()
-        cur.execute('''
+        cur.execute("""
             CREATE TABLE IF NOT EXISTS bloom_files_v3 (
                 path TEXT,
                 key TEXT,
@@ -47,13 +45,13 @@ class Database:
                 created INTEGER,
                 array BLOB
             )
-        ''')
+        """)
         cur.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx1 ON bloom_files_v3 ( path, key, part )')
         self._connection.commit()
 
     def get_file_arrays(self, path, size, mtime, version, sample_sizes):
         sample_sizes_str = ','.join(str(i) for i in sample_sizes)
-        key = f"{size}:{mtime}:{version}:{sample_sizes_str}"
+        key = f'{size}:{mtime}:{version}:{sample_sizes_str}'
         cur = self._connect().cursor()
         cur.execute('SELECT part, array FROM bloom_files_v3 WHERE path=? AND key=?', (str(path), key))
         rows = sorted(cur.fetchall())
@@ -63,23 +61,18 @@ class Database:
     def set_file_arrays(self, path, size, mtime, version, sample_sizes, arrays):
         assert all(isinstance(a, bytes) for a in arrays)
         sample_sizes_str = ','.join(str(i) for i in sample_sizes)
-        key = f"{size}:{mtime}:{version}:{sample_sizes_str}"
+        key = f'{size}:{mtime}:{version}:{sample_sizes_str}'
         now = int(time())
         compressed_arrays = [zlib.compress(a) for a in arrays]
-        logger.debug(
-            'Array compression: %.2f kB -> %.2f kB',
-            sum(len(a) for a in arrays) / 1024,
-            sum(len(a) for a in compressed_arrays) / 1024)
+        logger.debug('Array compression: %.2f kB -> %.2f kB', sum(len(a) for a in arrays) / 1024, sum(len(a) for a in compressed_arrays) / 1024)
         cur = self._connect().cursor()
         # The upsert syntax works in sqlite since 3.24.0, but it seems some Python installations have older version
-        #cur.execute('''
+        # cur.execute('''
         #    INSERT INTO bloom_files_v1 (key, created, array) VALUES (?, ?, ?)
         #    ON CONFLICT (key) DO UPDATE SET created=?, array=?
         #''', (key, now, array, now, array))
         # So let's do DELETE + INSERT instead :)
-        cur.execute('DELETE FROM bloom_files_v3 WHERE path=?', (str(path), ))
+        cur.execute('DELETE FROM bloom_files_v3 WHERE path=?', (str(path),))
         for n, a in enumerate(compressed_arrays):
-            cur.execute(
-                'INSERT INTO bloom_files_v3 (path, key, part, created, array) VALUES (?, ?, ?, ?, ?)',
-                (str(path), key, n, now, a))
+            cur.execute('INSERT INTO bloom_files_v3 (path, key, part, created, array) VALUES (?, ?, ?, ?, ?)', (str(path), key, n, now, a))
         self._connection.commit()

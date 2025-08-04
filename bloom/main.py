@@ -1,18 +1,16 @@
-from argparse import ArgumentParser
-from functools import partial
 import gzip
-from logging import getLogger
 import lzma
 import multiprocessing
 import os
-from pathlib import Path
-from queue import Queue
 import sys
+from argparse import ArgumentParser
+from functools import partial
+from logging import getLogger
+from pathlib import Path
 from time import monotonic as monotime
 
 from .database import open_database
-from .hash import insert_bloom_fnv1a_64, count_ones
-
+from .hash import count_ones, insert_bloom_fnv1a_64
 
 logger = getLogger(__name__)
 
@@ -88,8 +86,8 @@ def match_file(db, expressions, path, array_bytesize=default_array_bytesize):
         arrays_filled = []
         for file_array in file_arrays:
             pct_filled = 100 * count_ones(file_array) / (len(file_array) * 8)
-            arrays_filled.append('{:.1f} %'.format(pct_filled))
-        for n, file_array in enumerate(file_arrays, start=1):
+            arrays_filled.append(f'{pct_filled:.1f} %')
+        for _n, file_array in enumerate(file_arrays, start=1):
             assert len(file_array) == len(match_array)
             if array_is_subset(match_array, file_array):
                 logger.debug('File possibly matching: %s (arrays filled: %s)', path, ' '.join(arrays_filled))
@@ -159,13 +157,14 @@ def construct_file_arrays(raw_stream, array_bytesize, sample_sizes):
     arrays_filled = []
     for file_array in file_arrays:
         pct_filled = 100 * count_ones(file_array) / (len(file_array) * 8)
-        arrays_filled.append('{:.1f} %'.format(pct_filled))
+        arrays_filled.append(f'{pct_filled:.1f} %')
     logger.debug(
-        'Indexed %.2f MB in %.3f s, %.0f kB arrays filled: %s',
-        total_bytes / 2**20, td, len(file_arrays[0]) / 2**10, ' '.join(arrays_filled))
+        'Indexed %.2f MB in %.3f s, %.0f kB arrays filled: %s', total_bytes / 2**20, td, len(file_arrays[0]) / 2**10, ' '.join(arrays_filled)
+    )
     return file_arrays
 
 
 def setup_logging(verbose):
     from logging import DEBUG, INFO, basicConfig
+
     basicConfig(format=log_format, level=DEBUG if verbose else INFO)

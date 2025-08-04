@@ -1,16 +1,17 @@
-from pathlib import Path
 import os
-from subprocess import check_call
 import sys
+from pathlib import Path
+from subprocess import check_call
 
 
 def test_import():
-    import bloom
+    pass
 
 
 def test_hashc():
     from bloom._hashc import hello
-    assert hello("hi") == 2
+
+    assert hello('hi') == 2
 
 
 def test_run_help():
