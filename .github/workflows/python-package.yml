@@ -20,6 +20,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        path: src
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
@@ -30,19 +32,19 @@ jobs:
         cc --version
         python3 -m pip install --upgrade pip
         python3 -m pip install flake8 pytest
-        if [ -f requirements.txt ]; then python3 -m pip install -r requirements.txt; fi
+        if [ -f src/requirements.txt ]; then python3 -m pip install -r src/requirements.txt; fi
         # Install build tools for C extensions
         python3 -m pip install --upgrade setuptools wheel
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 src --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        flake8 src --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Install this package
       run: |
-        python3 -m pip install -v .
+        python3 -m pip install -v src/
         python3 -c 'from bloom import _hashc; print(_hashc)'
     - name: Test with pytest
       run: |
-        python3 -m pytest -v -s --tb=native tests
+        python3 -m pytest -v -s --tb=native src/tests
