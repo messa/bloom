@@ -11,7 +11,7 @@ help:
 
 install:
 	uv venv
-	uv add -e ".[dev]"
+	uv pip install -e ".[dev]"
 
 check:
 	uv run pytest -v

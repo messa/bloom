@@ -41,7 +41,8 @@ jobs:
         uv --version
         cd src
         uv venv
-        uv add -e ".[dev]"
+        uv add pytest pytest-cov ruff mypy
+        uv add .
 
     - name: Lint with ruff
       run: |
