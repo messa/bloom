@@ -57,8 +57,7 @@ jobs:
 
     - name: Test with pytest
       run: |
-        cd src
-        python3 -m pytest -v -s --tb=native tests
+        python3 -m pytest -v -s --tb=native src/tests
 
     - name: End-to-end test
       run: |
