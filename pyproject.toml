@@ -45,8 +45,6 @@ dev = [
 [tool.setuptools]
 packages = ["bloom"]
 zip-safe = false
-
-[tool.setuptools.ext-modules]
 ext-modules = [
     {name = "bloom._hashc", sources = ["bloom/_hashcmodule.c"]}
 ]
