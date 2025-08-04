@@ -29,60 +29,46 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install uv
-      run: |
-        curl -LsSf https://astral.sh/uv/install.sh | sh
-        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-
-    - name: Build package
+    - name: Install dependencies
       run: |
         python3 --version
         cc --version
-        uv --version
+        python3 -m pip install --upgrade pip wheel setuptools
+        python3 -m pip install "./src[dev]"
+
+    - name: Lint with ruff
+      run: |
         cd src
-        uv build
-
-    - name: Create test environment
-      run: |
-        mkdir test-env
-        cd test-env
-        uv venv
-        uv add pytest pytest-cov ruff mypy
-        uv add ../src/dist/*.whl
-
-    - name: Lint source code
-      run: |
-        cd test-env
-        uv run ruff check ../src/bloom
-        uv run ruff format --check ../src/bloom
+        ruff check .
+        ruff format --check .
 
     - name: Type check with mypy
       run: |
-        cd test-env
-        uv run mypy ../src/bloom
-
-    - name: Verify package installation
-      run: |
-        cd test-env
-        uv run python -c 'from bloom import _hashc; print(_hashc)'
-        uv run bloom --help
+        cd src
+        mypy bloom
 
     - name: Test with pytest
       run: |
-        cd test-env
-        uv run pytest -v -s --tb=native ../src/tests
+        cd src
+        python3 -m pytest -v -s --tb=native tests
+
+    - name: Verify package installation
+      run: |
+        python3 -c 'from bloom import _hashc; print(_hashc)'
+        bloom --help
 
     - name: End-to-end test
       run: |
         set -ex
-        cd test-env
-        mkdir -p e2e
-        cd e2e
-        echo foobar | xz > sample.log.xz
-        uv run bloom --db sample.db --index --file sample.log.xz
 
-        find . -type f -name '*.log.xz' | uv run bloom --db sample.db ooba > ooba_output.txt
-        find . -type f -name '*.log.xz' | uv run bloom --db sample.db nope > nope_output.txt
+        mkdir e2e
+        cd e2e
+
+        echo foobar | xz > sample.log.xz
+        bloom --db sample.db --index --file sample.log.xz
+
+        find . -type f -name '*.log.xz' | bloom --db sample.db ooba > ooba_output.txt
+        find . -type f -name '*.log.xz' | bloom --db sample.db nope > nope_output.txt
 
         test $(wc -l < ooba_output.txt) -eq 1
         test $(wc -l < nope_output.txt) -eq 0
