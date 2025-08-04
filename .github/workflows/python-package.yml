@@ -27,9 +27,12 @@ jobs:
     - name: Install dependencies
       run: |
         python3 --version
+        cc --version
         python3 -m pip install --upgrade pip
         python3 -m pip install flake8 pytest
         if [ -f requirements.txt ]; then python3 -m pip install -r requirements.txt; fi
+        # Install build tools for C extensions
+        python3 -m pip install --upgrade setuptools wheel
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
@@ -38,7 +41,8 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Install this package
       run: |
-        python3 -m pip install .
+        python3 -m pip install -v .
+        python3 -c 'from bloom import _hashc; print(_hashc)'
     - name: Test with pytest
       run: |
         python3 -m pytest -v -s --tb=native tests

@@ -70,9 +70,9 @@ static PyObject* hashc_insert_bloom_fnv1a_32(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, "Ys#I", &array, &data, &dataSize, &sampleSize)) {
         return NULL;
     }
-    const Py_ssize_t arraySize = PyByteArray_Size(array);
+    const Py_ssize_t arraySize = PyByteArray_Size((PyObject*)array);
     insert_bloom_fnv1a_32(
-        (unsigned char *) PyByteArray_AsString(array),
+        (unsigned char *) PyByteArray_AsString((PyObject*)array),
         arraySize,
         data,
         dataSize,
@@ -104,9 +104,9 @@ static PyObject* hashc_insert_bloom_fnv1a_64(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, "Ys#I", &array, &data, &dataSize, &sampleSize)) {
         return NULL;
     }
-    const Py_ssize_t arraySize = PyByteArray_Size(array);
+    const Py_ssize_t arraySize = PyByteArray_Size((PyObject*)array);
     insert_bloom_fnv1a_64(
-        (unsigned char *) PyByteArray_AsString(array),
+        (unsigned char *) PyByteArray_AsString((PyObject*)array),
         arraySize,
         data,
         dataSize,
