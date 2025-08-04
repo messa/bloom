@@ -5,7 +5,7 @@ name: Python package
 
 on:
   push:
-    branches: [ main ]
+    branches: [ '*' ]
   pull_request:
     branches: [ main ]
 
@@ -29,43 +29,53 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
     - name: Install dependencies
       run: |
         python3 --version
         cc --version
-        python3 -m pip install --upgrade pip
-        python3 -m pip install flake8 pytest
-        if [ -f src/requirements.txt ]; then python3 -m pip install -r src/requirements.txt; fi
-        # Install build tools for C extensions
-        python3 -m pip install --upgrade setuptools wheel
+        uv --version
+        cd src
+        uv venv
+        uv add -e ".[dev]"
 
-    - name: Lint with flake8
+    - name: Lint with ruff
       run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 src --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 src --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        cd src
+        uv run ruff check .
+        uv run ruff format --check .
 
-    - name: Install this package
+    - name: Type check with mypy
       run: |
-        python3 -m pip install -v src/
-        python3 -c 'from bloom import _hashc; print(_hashc)'
-        bloom --help
+        cd src
+        uv run mypy bloom
+
+    - name: Verify package installation
+      run: |
+        cd src
+        uv run python -c 'from bloom import _hashc; print(_hashc)'
+        uv run bloom --help
 
     - name: Test with pytest
       run: |
-        python3 -m pytest -v -s --tb=native src/tests
+        cd src
+        uv run pytest -v -s --tb=native
 
     - name: End-to-end test
       run: |
         set -ex
-        mkdir e2e
-        cd e2e
+        cd src
+        mkdir -p ../e2e
+        cd ../e2e
         echo foobar | xz > sample.log.xz
-        bloom --db sample.db --index --file sample.log.xz
+        ../src/.venv/bin/bloom --db sample.db --index --file sample.log.xz
 
-        find . -type f -name '*.log.xz' | bloom --db sample.db ooba > ooba_output.txt
-        find . -type f -name '*.log.xz' | bloom --db sample.db nope > nope_output.txt
+        find . -type f -name '*.log.xz' | ../src/.venv/bin/bloom --db sample.db ooba > ooba_output.txt
+        find . -type f -name '*.log.xz' | ../src/.venv/bin/bloom --db sample.db nope > nope_output.txt
 
         test $(wc -l < ooba_output.txt) -eq 1
         test $(wc -l < nope_output.txt) -eq 0

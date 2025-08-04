@@ -29,7 +29,59 @@ This path can be changed using command line option `--db` or environment variabl
 Installation
 ------------
 
+### Using pip
+
 ```shell
 $ python3 -m pip install https://github.com/messa/bloom/archive/main.zip
+```
+
+### Using uv
+
+[uv](https://github.com/astral-sh/uv) is a fast Python package installer and resolver, written in Rust.
+
+```shell
+$ uv tool install https://github.com/messa/bloom/archive/main.zip
+```
+
+### Development
+
+Clone the repository and install in editable mode with development dependencies:
+
+```shell
+$ git clone https://github.com/messa/bloom.git
+$ cd bloom
+$ make install
+```
+
+Or manually:
+
+```shell
+$ uv venv
+$ uv add -e ".[dev]"
+```
+
+Run tests:
+
+```shell
+$ make check
+```
+
+Run linting:
+
+```shell
+$ make lint       # Check for style issues
+$ make lint-fix   # Automatically fix style issues
+```
+
+Run type checking:
+
+```shell
+$ make typecheck
+```
+
+All available commands:
+
+```shell
+$ make help
 ```
 

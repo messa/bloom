@@ -1,6 +1,78 @@
 [build-system]
-requires = [
-    "setuptools>=42",
-    "wheel"
-]
+requires = ["setuptools>=68", "wheel", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "bloom"
+version = "0.0.1"
+description = "Index files (log files etc.) using a bloom filter"
+readme = "README.md"
+authors = [
+    {name = "Petr Messner", email = "petr.messner@gmail.com"}
+]
+license = {text = "MIT"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.9"
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/messa/bloom"
+"Bug Tracker" = "https://github.com/messa/bloom/issues"
+
+[project.scripts]
+bloom = "bloom:bloom_main"
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+]
+dev = [
+    "bloom[test]",
+    "ruff>=0.1.0",
+    "mypy>=1.0",
+]
+
+[tool.setuptools]
+packages = ["bloom"]
+zip-safe = false
+
+[tool.setuptools.ext-modules]
+ext-modules = [
+    {name = "bloom._hashc", sources = ["bloom/_hashcmodule.c"]}
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+]
+ignore = []
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]

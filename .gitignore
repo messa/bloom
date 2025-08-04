@@ -128,6 +128,13 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# ruff
+.ruff_cache/
+
 # Editors and IDE
 .*.swp
 .vscode
+.idea/
+
+# Project specific
+*.db
