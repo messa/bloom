@@ -34,49 +34,55 @@ jobs:
         curl -LsSf https://astral.sh/uv/install.sh | sh
         echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
-    - name: Install dependencies
+    - name: Build package
       run: |
         python3 --version
         cc --version
         uv --version
         cd src
+        uv build
+
+    - name: Create test environment
+      run: |
+        mkdir test-env
+        cd test-env
         uv venv
         uv add pytest pytest-cov ruff mypy
-        uv add .
+        uv add ../src/dist/*.whl
 
-    - name: Lint with ruff
+    - name: Lint source code
       run: |
-        cd src
-        uv run ruff check .
-        uv run ruff format --check .
+        cd test-env
+        uv run ruff check ../src/bloom
+        uv run ruff format --check ../src/bloom
 
     - name: Type check with mypy
       run: |
-        cd src
-        uv run mypy bloom
+        cd test-env
+        uv run mypy ../src/bloom
 
     - name: Verify package installation
       run: |
-        cd src
+        cd test-env
         uv run python -c 'from bloom import _hashc; print(_hashc)'
         uv run bloom --help
 
     - name: Test with pytest
       run: |
-        cd src
-        uv run pytest -v -s --tb=native
+        cd test-env
+        uv run pytest -v -s --tb=native ../src/tests
 
     - name: End-to-end test
       run: |
         set -ex
-        cd src
-        mkdir -p ../e2e
-        cd ../e2e
+        cd test-env
+        mkdir -p e2e
+        cd e2e
         echo foobar | xz > sample.log.xz
-        ../src/.venv/bin/bloom --db sample.db --index --file sample.log.xz
+        uv run bloom --db sample.db --index --file sample.log.xz
 
-        find . -type f -name '*.log.xz' | ../src/.venv/bin/bloom --db sample.db ooba > ooba_output.txt
-        find . -type f -name '*.log.xz' | ../src/.venv/bin/bloom --db sample.db nope > nope_output.txt
+        find . -type f -name '*.log.xz' | uv run bloom --db sample.db ooba > ooba_output.txt
+        find . -type f -name '*.log.xz' | uv run bloom --db sample.db nope > nope_output.txt
 
         test $(wc -l < ooba_output.txt) -eq 1
         test $(wc -l < nope_output.txt) -eq 0
