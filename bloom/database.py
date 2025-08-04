@@ -69,9 +69,9 @@ class Database:
         cur = self._connect().cursor()
         # The upsert syntax works in sqlite since 3.24.0, but it seems some Python installations have older version
         # cur.execute('''
-        #    INSERT INTO bloom_files_v1 (key, created, array) VALUES (?, ?, ?)
-        #    ON CONFLICT (key) DO UPDATE SET created=?, array=?
-        #''', (key, now, array, now, array))
+        #     INSERT INTO bloom_files_v1 (key, created, array) VALUES (?, ?, ?)
+        #     ON CONFLICT (key) DO UPDATE SET created=?, array=?
+        # ''', (key, now, array, now, array))
         # So let's do DELETE + INSERT instead :)
         cur.execute('DELETE FROM bloom_files_v3 WHERE path=?', (str(path),))
         for n, a in enumerate(compressed_arrays):
