@@ -1,12 +1,13 @@
-import gzip
-import lzma
-import multiprocessing
-import os
-import sys
 from argparse import ArgumentParser
 from functools import partial
+from gzip import open as gzip_open
 from logging import getLogger
+from lzma import open as lzma_open
+from multiprocessing import Pool
+from os import environ, fstat
 from pathlib import Path
+from sys import exit as sys_exit
+from sys import stdin
 from time import monotonic as monotime
 
 from .database import open_database
@@ -19,7 +20,7 @@ log_format = '%(asctime)s [%(process)d %(processName)17s] %(name)s %(levelname)5
 hash_func_name = 'fnv1a_64'
 bloom_index_func = insert_bloom_fnv1a_64
 default_array_bytesize = 2**21
-array_full_threshold = float(os.environ.get('BLOOM_ARRAY_FULL_THRESHOLD') or 0.50)
+array_full_threshold = float(environ.get('BLOOM_ARRAY_FULL_THRESHOLD') or 0.50)
 sample_sizes = [4, 5, 6]
 
 
@@ -33,11 +34,11 @@ def bloom_main():
     args = p.parse_args()
     setup_logging(args.verbose)
     if not args.index and not args.expression:
-        sys.exit('ERROR: No expression provided')
+        sys_exit('ERROR: No expression provided')
     if args.db:
         db_path = Path(args.db)
-    elif os.environ.get('BLOOM_DB'):
-        db_path = Path(os.environ['BLOOM_DB'])
+    elif environ.get('BLOOM_DB'):
+        db_path = Path(environ['BLOOM_DB'])
     else:
         db_path = Path('~/.cache/bloom/db').expanduser()
     logger.debug('DB path: %s', db_path)
@@ -47,8 +48,8 @@ def bloom_main():
         file_paths = [Path(f) for f in args.file]
     else:
         # file paths are expected on stdin, one per line
-        file_paths = (Path(line.rstrip('\r\n')) for line in sys.stdin)
-    with multiprocessing.Pool() as pool:
+        file_paths = (Path(line.rstrip('\r\n')) for line in stdin)
+    with Pool() as pool:
         if args.index:
             for _ in pool.imap(partial(index_file, db), file_paths):
                 pass
@@ -62,7 +63,7 @@ def index_file(db, path, array_bytesize=default_array_bytesize):
     assert isinstance(path, Path)
     path_resolved = path.resolve()
     with path.open(mode='rb') as f:
-        f_stat = os.fstat(f.fileno())
+        f_stat = fstat(f.fileno())
         file_arrays = db.get_file_arrays(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, sample_sizes)
         if file_arrays:
             logger.debug('File is up-to-date: %s', path)
@@ -76,7 +77,7 @@ def match_file(db, expressions, path, array_bytesize=default_array_bytesize):
     assert isinstance(path, Path)
     path_resolved = path.resolve()
     with path.open(mode='rb') as f:
-        f_stat = os.fstat(f.fileno())
+        f_stat = fstat(f.fileno())
         file_arrays = db.get_file_arrays(path_resolved, f_stat.st_size, f_stat.st_mtime, hash_func_name, sample_sizes)
         if not file_arrays:
             logger.debug('Indexing file: %s', path)
@@ -118,13 +119,13 @@ def construct_file_arrays(raw_stream, array_bytesize, sample_sizes):
     assert raw_stream.tell() == 0
     if header.startswith(bytes.fromhex('1f8b')):
         logger.debug('gzip compression detected')
-        stream = gzip.open(raw_stream, mode='rb')
+        stream = gzip_open(raw_stream, mode='rb')
     elif header.startswith(bytes.fromhex('28b52ffd')):
         logger.debug('zstd compression detected')
         raise Exception('zstd decompression not implemented')
     elif header.startswith(bytes.fromhex('FD377A585A00')):
         logger.debug('xz compression detected')
-        stream = lzma.open(raw_stream, mode='rb')
+        stream = lzma_open(raw_stream, mode='rb')
     else:
         try:
             header.decode('utf-8')

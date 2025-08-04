@@ -1,4 +1,4 @@
-import os
+from os import urandom
 from time import monotonic as monotime
 
 from pytest import fixture, mark
@@ -30,7 +30,7 @@ def test_hash_performance(hash_module, algo):
     t0 = monotime()
     total_bytes = 0
     for _i in range(50):
-        sample = os.urandom(2**14)
+        sample = urandom(2**14)
         total_bytes += len(sample)
         func(sample)
     td = monotime() - t0
@@ -65,7 +65,7 @@ def test_bloom_performance_bloom(hash_module, algo):
     total_bytes = 0
     array = bytearray(2**16)
     for _i in range(50):
-        data = os.urandom(2**12)
+        data = urandom(2**12)
         total_bytes += len(data)
         func(array, data, 4)
     td = monotime() - t0

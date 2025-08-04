@@ -1,6 +1,7 @@
-import gzip
-import lzma
-import zlib
+from gzip import compress as gzip_compress
+from gzip import open as gzip_open
+from lzma import open as lzma_open
+from zlib import decompress as zlib_decompress
 
 from pytest import fixture
 
@@ -39,7 +40,7 @@ def test_construct_file_arrays_simple(temp_dir):
 
 def test_construct_file_arrays_gzip(temp_dir):
     p = temp_dir / 'one.txt.gz'
-    with gzip.open(p, mode='wb') as f:
+    with gzip_open(p, mode='wb') as f:
         f.write(b'hello\nworld\n')
     with p.open(mode='rb') as f:
         (array,) = construct_file_arrays(f, array_bytesize=16, sample_sizes=[4])
@@ -49,7 +50,7 @@ def test_construct_file_arrays_gzip(temp_dir):
 
 def test_construct_file_arrays_xz(temp_dir):
     p = temp_dir / 'one.txt.xz'
-    with lzma.open(p, mode='wb') as f:
+    with lzma_open(p, mode='wb') as f:
         f.write(b'hello\nworld\n')
     with p.open(mode='rb') as f:
         (array,) = construct_file_arrays(f, array_bytesize=16, sample_sizes=[4])
@@ -66,7 +67,7 @@ def test_index_files(temp_dir, db):
     p1 = temp_dir / 'one.txt'
     p1.write_bytes(b'Lorem ipsum dolor sit amet.\nThis is second line.\n')
     p2 = temp_dir / 'two.txt.gz'
-    p2.write_bytes(gzip.compress(b'This is a compressed file.\n'))
+    p2.write_bytes(gzip_compress(b'This is a compressed file.\n'))
     index_file(db, p1, array_bytesize=16)
     index_file(db, p2, array_bytesize=16)
     cur = db._connect().cursor()
@@ -74,17 +75,17 @@ def test_index_files(temp_dir, db):
     row1, row2 = sorted(cur.fetchall())
     assert row1[0] == str(p1)
     assert row1[1] == f'{p1.stat().st_size}:{p1.stat().st_mtime}:fnv1a_64:4,5,6'
-    assert zlib.decompress(row1[2]).hex() == '97e126c173ff9373a75d1967f97219ec'
+    assert zlib_decompress(row1[2]).hex() == '97e126c173ff9373a75d1967f97219ec'
     assert row2[0] == str(p2)
     assert row2[1] == f'{p2.stat().st_size}:{p2.stat().st_mtime}:fnv1a_64:4,5,6'
-    assert zlib.decompress(row2[2]).hex() == '12e3c6f14a0792e8836c194a4e8f00e0'
+    assert zlib_decompress(row2[2]).hex() == '12e3c6f14a0792e8836c194a4e8f00e0'
 
 
 def test_filter_files(temp_dir, db):
     p1 = temp_dir / 'one.txt'
     p1.write_bytes(b'Lorem ipsum dolor sit amet.\nThis is second line.\n')
     p2 = temp_dir / 'two.txt.gz'
-    p2.write_bytes(gzip.compress(b'This is a compressed file.\n'))
+    p2.write_bytes(gzip_compress(b'This is a compressed file.\n'))
 
     def filter_files(db, paths, q):
         return [p for p in paths if match_file(db, q, p)]

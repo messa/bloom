@@ -1,7 +1,8 @@
-import sqlite3
-import zlib
 from logging import getLogger
+from sqlite3 import connect as sqlite3_connect
 from time import time
+from zlib import compress as zlib_compress
+from zlib import decompress as zlib_decompress
 
 logger = getLogger(__name__)
 
@@ -26,7 +27,7 @@ class Database:
 
     def _connect(self):
         if not self._connection:
-            conn = sqlite3.connect(self._db_path, timeout=30)
+            conn = sqlite3_connect(self._db_path, timeout=30)
             self._connection = conn
         return self._connection
 
@@ -56,14 +57,14 @@ class Database:
         cur.execute('SELECT part, array FROM bloom_files_v3 WHERE path=? AND key=?', (str(path), key))
         rows = sorted(cur.fetchall())
         self._connection.rollback()
-        return [zlib.decompress(row[1]) for row in rows]
+        return [zlib_decompress(row[1]) for row in rows]
 
     def set_file_arrays(self, path, size, mtime, version, sample_sizes, arrays):
         assert all(isinstance(a, bytes) for a in arrays)
         sample_sizes_str = ','.join(str(i) for i in sample_sizes)
         key = f'{size}:{mtime}:{version}:{sample_sizes_str}'
         now = int(time())
-        compressed_arrays = [zlib.compress(a) for a in arrays]
+        compressed_arrays = [zlib_compress(a) for a in arrays]
         logger.debug('Array compression: %.2f kB -> %.2f kB', sum(len(a) for a in arrays) / 1024, sum(len(a) for a in compressed_arrays) / 1024)
         cur = self._connect().cursor()
         # The upsert syntax works in sqlite since 3.24.0, but it seems some Python installations have older version

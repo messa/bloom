@@ -1,7 +1,7 @@
-import os
-import sys
+from os import environ
 from pathlib import Path
 from subprocess import check_call
+from sys import executable
 
 
 def test_import():
@@ -15,5 +15,5 @@ def test_hashc():
 
 
 def test_run_help():
-    os.environ['PATH'] = str(Path(sys.executable).parent) + ':' + os.environ['PATH']
+    environ['PATH'] = str(Path(executable).parent) + ':' + environ['PATH']
     check_call(['bloom', '--help'])
