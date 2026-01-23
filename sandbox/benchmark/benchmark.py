@@ -34,6 +34,7 @@ class BenchmarkConfig:
     target_fpp: float = 0.01  # 1% default
     sample_sizes: list[int] = field(default_factory=lambda: [4, 5, 6])
     num_queries: int = 10000
+    queries_file: Path | None = None  # File with custom queries
     random_seed: int = 42
 
 
@@ -90,14 +91,29 @@ def extract_samples(content: bytes, sample_sizes: list[int]) -> set[bytes]:
     return samples
 
 
+def load_queries_from_file(queries_file: Path) -> list[str]:
+    """Load queries from a file (one per line, # comments ignored)."""
+    queries = []
+    with open(queries_file, 'r') as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith('#'):
+                queries.append(line)
+    return queries
+
+
 def generate_queries(
     content: bytes,
     sample_sizes: list[int],
     num_queries: int,
-    rng: random.Random
+    rng: random.Random,
+    queries_file: Path | None = None
 ) -> tuple[list[bytes], set[bytes]]:
     """
     Generate test queries.
+
+    If queries_file is provided, use queries from that file.
+    Otherwise, generate random queries.
 
     Returns:
         (queries, true_samples) - queries to test and set of samples actually in content
@@ -107,18 +123,33 @@ def generate_queries(
 
     queries = []
 
-    # 50% of queries should be actual samples from the content
-    actual_samples = list(true_samples)
-    num_true_queries = min(num_queries // 2, len(actual_samples))
-    queries.extend(rng.sample(actual_samples, num_true_queries))
+    if queries_file is not None:
+        # Use queries from file
+        file_queries = load_queries_from_file(queries_file)
+        for q in file_queries:
+            q_bytes = q.lower().encode('utf-8')
+            # Generate n-grams from each query
+            for size in sample_sizes:
+                if len(q_bytes) >= size:
+                    for i in range(len(q_bytes) - size + 1):
+                        queries.append(q_bytes[i:i + size])
+        # Deduplicate and limit
+        queries = list(set(queries))
+        if len(queries) > num_queries:
+            queries = rng.sample(queries, num_queries)
+    else:
+        # 50% of queries should be actual samples from the content
+        actual_samples = list(true_samples)
+        num_true_queries = min(num_queries // 2, len(actual_samples))
+        queries.extend(rng.sample(actual_samples, num_true_queries))
 
-    # 50% of queries should be random strings (likely not in content)
-    num_false_queries = num_queries - num_true_queries
-    for _ in range(num_false_queries):
-        # Generate random bytes of random sample size
-        size = rng.choice(sample_sizes)
-        random_query = bytes(rng.randint(0, 255) for _ in range(size))
-        queries.append(random_query)
+        # 50% of queries should be random strings (likely not in content)
+        num_false_queries = num_queries - num_true_queries
+        for _ in range(num_false_queries):
+            # Generate random bytes of random sample size
+            size = rng.choice(sample_sizes)
+            random_query = bytes(rng.randint(0, 255) for _ in range(size))
+            queries.append(random_query)
 
     rng.shuffle(queries)
     return queries, true_samples
@@ -163,7 +194,7 @@ def run_benchmark_for_implementation(
 
     # Generate queries
     queries, true_samples = generate_queries(
-        content, config.sample_sizes, config.num_queries, rng
+        content, config.sample_sizes, config.num_queries, rng, config.queries_file
     )
 
     # Run queries
@@ -340,6 +371,8 @@ def main():
                         help='Target false positive probability (default: 0.01)')
     parser.add_argument('--queries', '-q', type=int, default=10000,
                         help='Number of queries per file (default: 10000)')
+    parser.add_argument('--queries-file', '-Q', type=Path, default=None,
+                        help='File with custom queries (one per line)')
     parser.add_argument('--seed', '-s', type=int, default=42,
                         help='Random seed (default: 42)')
     parser.add_argument('--list-implementations', action='store_true',
@@ -360,6 +393,7 @@ def main():
         output_dir=args.output_dir,
         target_fpp=args.fpp,
         num_queries=args.queries,
+        queries_file=args.queries_file,
         random_seed=args.seed,
     )
 

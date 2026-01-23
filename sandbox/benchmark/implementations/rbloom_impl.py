@@ -54,16 +54,11 @@ class RBloomImplementation(BloomFilterImplementation):
     def get_size_bytes(self) -> int:
         if self._filter is None:
             return 0
-        # rbloom stores size_in_bits = expected_items / false_positive_rate
-        # Approximate size calculation
-        try:
-            # Try to get actual size if available
-            return len(self._filter.save_bytes())
-        except (AttributeError, TypeError):
-            # Estimate: ~1.44 * n * log2(1/p) bits
-            import math
-            bits = int(1.44 * self._expected_items * math.log2(1 / self._expected_fpp))
-            return (bits + 7) // 8
+        # rbloom doesn't expose size directly when using built-in hash
+        # Estimate: ~1.44 * n * log2(1/p) bits (optimal bloom filter formula)
+        import math
+        bits = int(1.44 * self._expected_items * math.log2(1 / self._expected_fpp))
+        return (bits + 7) // 8
 
     def save(self, path: Path) -> None:
         if self._filter is None:
