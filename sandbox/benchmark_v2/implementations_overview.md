@@ -10,6 +10,7 @@
 | python_rbloom | Python/Rust | rbloom | MD5 (custom) | .rbloom | Fast Rust impl |
 | python_blooms | Python | blooms | MD5 | .blooms | Base64 serialization |
 | python_fastbloom | Python/Rust | fastbloom-rs | internal | .fastbloom | Claims 10x faster |
+| rust_fastbloom | Rust | fastbloom | internal | .rustbloom | Native Rust, bincode serialization |
 
 ## Detailed Information
 
@@ -64,6 +65,15 @@
 - **Serialization:** `save_to_file_with_hashes()` / `from_file_with_hashes()`
 - **Config:** 10M capacity, 1% error rate
 - **Note:** Library panics on missing file, explicit existence check added
+
+### rust_fastbloom
+
+- **File:** `rust_fastbloom/src/main.rs`
+- **Library:** [fastbloom](https://crates.io/crates/fastbloom) (Rust crate)
+- **Description:** Native Rust implementation, same library as Python fastbloom-rs
+- **Serialization:** bincode with serde
+- **Config:** 10M capacity, 1% error rate
+- **Build:** `cargo build --release` in the directory
 
 ## Common Configuration
 

@@ -9,6 +9,7 @@ cd "$(dirname "$0")"
 ./check_implementation.py implementations/python_rbloom/sample_rbloom_ngram.py
 ./check_implementation.py implementations/python_blooms/sample_blooms_ngram.py
 ./check_implementation.py implementations/python_fastbloom/sample_fastbloom_ngram.py
+./check_implementation.py implementations/rust_fastbloom/rust_fastbloom_ngram
 
 echo "========================================"
 echo "All implementations PASSED!"
