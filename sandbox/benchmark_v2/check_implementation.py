@@ -65,7 +65,7 @@ def test_basic_functionality(impl_path: str, tmpdir: Path) -> bool:
     if not index_files:
         print(f"  FAIL: No index file created in {index_dir}")
         return False
-    print(f"  OK: Index file created: {index_files[0].name}")
+    print(f"  OK: Index file(s) created: {index_files}")
 
     # Test check command with term that exists
     print("  Running 'check' command with existing term 'Hello'...")
