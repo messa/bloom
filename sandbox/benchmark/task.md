@@ -8,25 +8,25 @@ The assignment is:
 
 1. Find different bloom filter implementations
 
-  - Including: PageBloomFilter, fastbloom, rbloom, bits-and-blooms/bloom, DCSO/bloom
-  - Also including this project (github.com:messa/bloom)
-  - Including xxHash3 and Kirsch-Mitzenmacher
-  - I'm interested also in bloom filter implementation used in Loki, Clickhouse, Parquet and Lance
-  - Write a report about the implementations and their features and characteristics
+    - Including: PageBloomFilter, fastbloom, rbloom, bits-and-blooms/bloom, DCSO/bloom
+    - Also including this project (github.com:messa/bloom)
+    - Including xxHash3 and Kirsch-Mitzenmacher
+    - I'm interested also in bloom filter implementation used in Loki, Clickhouse, Parquet and Lance
+    - Write a report about the implementations and their features and characteristics
 
 2. Choose 5+ of them (with available source code) and extract/implement them here (in sandbox/benchmark directory)
 
 3. Create a script that generates a large dataset (e.g. 10 log files with 100-300 MB size each when compressed in .xz)
 
-  - The script should be determistic and reproducible so the sample log file contents is the same every time
-  - Do not commit the sample log files in git - add them to the .gitignore file
-  - After you generate the log files, compute their sha1 hash and commit it to the git repository
-  - The log files should simulate real-world log files from different sources (e.g. fastapi servers, microservices, MongoDB)
-  - Most of the log files are unstructured text. Only MongoDB log files are structured JSON.
+    - The script should be determistic and reproducible so the sample log file contents is the same every time
+    - Do not commit the sample log files in git - add them to the .gitignore file
+    - After you generate the log files, compute their sha1 hash and commit it to the git repository
+    - The log files should simulate real-world log files from different sources (e.g. fastapi servers, microservices, MongoDB)
+    - Most of the log files are unstructured text. Only MongoDB log files are structured JSON.
 
 4. Create a benchmark program that evaluates all these implementations (in one or more configurations) on the generated dataset.
 
-  - Preferred architecture is a Python benchmark that calls the implementations (compiled from C++ etc.) in subprocesses
+    - Preferred architecture is a Python benchmark that calls the implementations (compiled from C++ etc.) in subprocesses
 
 5. Run the benchmark program and write report about the benchmark results.
 
