@@ -27,8 +27,12 @@ Keep track of the progress in this file.
     - Measures FPP, index size, timing
     - Outputs results to JSON
 
-[ ] Run benchmark and write results report
-    - Target: FPP < 1% (ideally < 0.1%)
-    - Target: Index size < 10% of compressed log size
+[x] Run benchmark and write results report
+    - Created: benchmark_report.md
+    - fastbloom-rs: FPP 0.4-1.0% (meets target)
+    - rbloom: FPP 0.0-0.8% (meets target)
+    - messa-bloom: FPP 6-8% (needs optimization)
+    - Index ratio ~56% (exceeds target due to n-gram sampling)
+    - Documented alternatives: tokenization, selective indexing
 
-[ ] Commit and push all changes
+[x] Commit and push all changes

@@ -90,3 +90,52 @@ Benchmark používá:
 N-gram sampling:
 - Extrakce 4, 5, 6-byte vzorků z každého řádku logu
 - Lowercase normalizace
+
+## Problém s N-gram samplingem
+
+N-gram sampling generuje příliš vysoký index ratio (50-60% místo cílových <10%):
+- Pro každý řádek délky L generujeme ~3*(L-4) vzorků (pro 4,5,6-gramy)
+- 150 MB nekomprimovaného textu = miliony unikátních n-gramů
+- Bloom filter musí být dostatečně velký pro všechny tyto vzorky
+
+### Alternativní přístupy pro menší index
+
+1. **Tokenizace (word-level)**
+   - Indexovat celá slova/tokeny místo n-gramů
+   - Whitespace/delimiter-based tokenizace
+   - Výrazně méně položek k indexování
+   - Nevýhoda: nenajde částečné shody
+
+2. **Selektivní indexování**
+   - Indexovat pouze "zajímavé" vzory:
+     - Request IDs (req-xxxx)
+     - User/Account IDs (usr_, acc_)
+     - URL paths (/api/...)
+     - Error messages
+   - Výrazně menší index
+   - Vyžaduje domain-specific pravidla
+
+3. **Hierarchický bloom filter**
+   - Coarse filter pro celý soubor (větší jednotky)
+   - Fine-grained filter per chunk (pro přesné vyhledávání)
+   - Two-level lookup
+
+4. **Line-level hashing**
+   - Hashovat celé řádky
+   - Vhodné pro přesné vyhledávání celých patterns
+   - Malý index
+   - Nevýhoda: nenajde částečné shody
+
+5. **Minhash/LSH**
+   - Pro podobnostní vyhledávání
+   - Vhodné pro fuzzy matching
+   - Jiný use case než bloom filter
+
+### Doporučení
+
+Pro log file indexing je nejlepší kombinace:
+1. **Tokenizace** pro běžné vyhledávání slov
+2. **N-gram** pouze pro specifické patterns (IDs, hashes)
+3. **Selektivní indexování** pro produkční nasazení
+
+Optimální index ratio < 10% je dosažitelné s tokenizací nebo selektivním indexováním.
