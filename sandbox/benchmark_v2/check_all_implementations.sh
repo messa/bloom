@@ -3,25 +3,11 @@ set -e
 
 cd "$(dirname "$0")"
 
-failed=0
-
-for impl in implementations/*/*_ngram implementations/*/*_ngram.py; do
-    [ -e "$impl" ] || continue  # Skip if no match
-    echo "========================================"
-    echo "Checking: $impl"
-    echo "========================================"
-    if ./check_implementation.py "$impl"; then
-        echo ""
-    else
-        failed=1
-        echo ""
-    fi
-done
+./check_implementation.py implementations/trivial_python_bloom/trivial_python_bloom_ngram.py
+./check_implementation.py implementations/trivial_cpp_bloom/trivial_cpp_bloom_ngram
+./check_implementation.py implementations/python_pybloomfiltermmap3/sample_pybloomfiltermmap3_ngram.py
+./check_implementation.py implementations/python_rbloom/sample_rbloom_ngram.py
+./check_implementation.py implementations/python_blooms/sample_blooms_ngram.py
 
 echo "========================================"
-if [ $failed -eq 0 ]; then
-    echo "All implementations PASSED!"
-else
-    echo "Some implementations FAILED!"
-    exit 1
-fi
+echo "All implementations PASSED!"
