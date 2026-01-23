@@ -7,6 +7,7 @@ Usage:
     INDEX_DIR=indices/trivial_python_bloom ./trivial_python_bloom.py check foo.log.xz slovo
 """
 
+import argparse
 import gzip
 import hashlib
 import lzma
@@ -111,40 +112,36 @@ def check_in_index(input_file: str, index_dir: str, search_term: str) -> bool:
 
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: trivial_python_bloom.py <add|check> ...", file=sys.stderr)
-        sys.exit(2)
+    parser = argparse.ArgumentParser(
+        description='Trivial Bloom filter implementation for benchmarking.'
+    )
+    subparsers = parser.add_subparsers(dest='command', required=True)
 
-    command = sys.argv[1]
+    # Add command
+    add_parser = subparsers.add_parser('add', help='Add a file to the index')
+    add_parser.add_argument('file', help='File to index')
+
+    # Check command
+    check_parser = subparsers.add_parser('check', help='Check if a term might be in an indexed file')
+    check_parser.add_argument('file', help='File to check against')
+    check_parser.add_argument('term', help='Search term to look for')
+
+    args = parser.parse_args()
+
     index_dir = os.environ.get('INDEX_DIR')
-
     if not index_dir:
         print("Error: INDEX_DIR environment variable not set", file=sys.stderr)
         sys.exit(2)
 
     try:
-        if command == 'add':
-            if len(sys.argv) != 3:
-                print("Usage: trivial_python_bloom.py add <file>", file=sys.stderr)
-                sys.exit(2)
-            input_file = sys.argv[2]
-            add_to_index(input_file, index_dir)
+        if args.command == 'add':
+            add_to_index(args.file, index_dir)
 
-        elif command == 'check':
-            if len(sys.argv) != 4:
-                print("Usage: trivial_python_bloom.py check <file> <search_term>", file=sys.stderr)
-                sys.exit(2)
-            input_file = sys.argv[2]
-            search_term = sys.argv[3]
-
-            if check_in_index(input_file, index_dir, search_term):
+        elif args.command == 'check':
+            if check_in_index(args.file, index_dir, args.term):
                 sys.exit(0)  # Might contain the term
             else:
                 sys.exit(1)  # Definitely does not contain the term
-
-        else:
-            print(f"Unknown command: {command}", file=sys.stderr)
-            sys.exit(2)
 
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)

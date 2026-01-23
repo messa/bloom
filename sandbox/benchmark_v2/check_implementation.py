@@ -6,6 +6,7 @@ Usage:
     cd sandbox/benchmark_v2 && ./check_implementation.py implementations/trivial_python_bloom/trivial_python_bloom.py
 """
 
+import argparse
 import lzma
 import os
 import subprocess
@@ -113,15 +114,19 @@ def test_error_handling(impl_path: str, tmpdir: Path) -> bool:
 
 
 def main():
-    if len(sys.argv) != 2:
-        print("Usage: check_implementation.py <implementation_script>", file=sys.stderr)
-        sys.exit(1)
+    parser = argparse.ArgumentParser(
+        description='Check implementation correctness for bloom filter implementations.'
+    )
+    parser.add_argument(
+        'implementation',
+        help='Path to the implementation script to test'
+    )
+    args = parser.parse_args()
 
-    impl_path = sys.argv[1]
+    impl_path = args.implementation
 
     if not os.path.exists(impl_path):
-        print(f"Error: Implementation not found: {impl_path}", file=sys.stderr)
-        sys.exit(1)
+        parser.error(f"Implementation not found: {impl_path}")
 
     # Make path absolute
     impl_path = os.path.abspath(impl_path)
