@@ -7,9 +7,11 @@ Usage:
     INDEX_DIR=indices/trivial_python_bloom ./trivial_python_bloom.py check foo.log.xz slovo
 """
 
+import gzip
 import hashlib
 import lzma
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -17,21 +19,34 @@ from pathlib import Path
 BITMAP_SIZE = 32 * 1024 * 1024  # 32 MB
 BITMAP_BITS = BITMAP_SIZE * 8
 NGRAM_SIZE = 3
-NUM_HASHES = 3
+
+# Token pattern: sequence of alphanumeric chars, colons, underscores, hyphens
+TOKEN_PATTERN = re.compile(r'[a-zA-Z0-9:_-]+')
 
 
-def get_ngrams(data: bytes, n: int = NGRAM_SIZE):
-    """Generate n-grams from bytes data."""
-    for i in range(len(data) - n + 1):
-        yield data[i:i + n]
+def get_ngrams(token: str, n: int = NGRAM_SIZE):
+    """Generate n-grams from a token string."""
+    for i in range(len(token) - n + 1):
+        yield token[i:i + n]
 
 
-def hash_ngram(ngram: bytes, seed: int) -> int:
+def hash_ngram(ngram: str) -> int:
     """Hash an n-gram to a bit position."""
-    h = hashlib.md5(bytes([seed]) + ngram).digest()
+    h = hashlib.md5(ngram.encode('utf-8')).digest()
     # Use first 8 bytes as integer
     value = int.from_bytes(h[:8], 'little')
     return value % BITMAP_BITS
+
+
+def open_file(filepath: Path):
+    """Open a file, decompressing if necessary based on extension."""
+    suffix = filepath.suffix.lower()
+    if suffix == '.xz':
+        return lzma.open(filepath, 'rt', encoding='utf-8', errors='replace')
+    elif suffix == '.gz':
+        return gzip.open(filepath, 'rt', encoding='utf-8', errors='replace')
+    else:
+        return open(filepath, 'r', encoding='utf-8', errors='replace')
 
 
 def set_bit(bitmap: bytearray, bit_pos: int):
@@ -56,18 +71,19 @@ def add_to_index(input_file: str, index_dir: str):
     # Create index directory if it doesn't exist
     index_path.mkdir(parents=True, exist_ok=True)
 
-    # Read and decompress the file
-    with lzma.open(input_path, 'rb') as f:
-        content = f.read()
-
     # Create empty bitmap
     bitmap = bytearray(BITMAP_SIZE)
 
-    # Add all n-grams to the bloom filter
-    for ngram in get_ngrams(content):
-        for seed in range(NUM_HASHES):
-            bit_pos = hash_ngram(ngram, seed)
-            set_bit(bitmap, bit_pos)
+    # Read file line by line, tokenize, and index n-grams
+    with open_file(input_path) as f:
+        for line in f:
+            # Extract tokens from the line
+            tokens = TOKEN_PATTERN.findall(line)
+            for token in tokens:
+                # Generate and index n-grams from each token
+                for ngram in get_ngrams(token):
+                    bit_pos = hash_ngram(ngram)
+                    set_bit(bitmap, bit_pos)
 
     # Write bitmap to file
     bitmap_file = index_path / (input_path.name + '.bitmap')
@@ -85,15 +101,11 @@ def check_in_index(input_file: str, index_dir: str, search_term: str) -> bool:
     with open(bitmap_file, 'rb') as f:
         bitmap = f.read()
 
-    # Convert search term to bytes
-    search_bytes = search_term.encode('utf-8')
-
     # Check all n-grams of the search term
-    for ngram in get_ngrams(search_bytes):
-        for seed in range(NUM_HASHES):
-            bit_pos = hash_ngram(ngram, seed)
-            if not get_bit(bitmap, bit_pos):
-                return False
+    for ngram in get_ngrams(search_term):
+        bit_pos = hash_ngram(ngram)
+        if not get_bit(bitmap, bit_pos):
+            return False
 
     return True
 
