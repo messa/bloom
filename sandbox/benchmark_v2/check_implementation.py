@@ -60,12 +60,12 @@ def test_basic_functionality(impl_path: str, tmpdir: Path) -> bool:
         return False
     print("  OK: 'add' command succeeded")
 
-    # Check that bitmap file was created
-    bitmap_file = index_dir / 'test.log.xz.bitmap'
-    if not bitmap_file.exists():
-        print(f"  FAIL: Bitmap file not created at {bitmap_file}")
+    # Check that index file was created (could be .bitmap, .bloom, etc.)
+    index_files = list(index_dir.glob('test.log.xz.*'))
+    if not index_files:
+        print(f"  FAIL: No index file created in {index_dir}")
         return False
-    print("  OK: Bitmap file created")
+    print(f"  OK: Index file created: {index_files[0].name}")
 
     # Test check command with term that exists
     print("  Running 'check' command with existing term 'Hello'...")
