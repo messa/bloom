@@ -28,8 +28,14 @@ def run_implementation(impl_path: str, index_dir: str, args: list[str]) -> int:
     env = os.environ.copy()
     env['INDEX_DIR'] = index_dir
 
+    # Detect if it's a Python script or binary
+    if impl_path.endswith('.py'):
+        cmd = [sys.executable, impl_path] + args
+    else:
+        cmd = [impl_path] + args
+
     result = subprocess.run(
-        [sys.executable, impl_path] + args,
+        cmd,
         env=env,
         capture_output=True,
         text=True

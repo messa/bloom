@@ -5,7 +5,8 @@ cd "$(dirname "$0")"
 
 failed=0
 
-for impl in implementations/*/*.py; do
+for impl in implementations/*/*_ngram implementations/*/*_ngram.py; do
+    [ -e "$impl" ] || continue  # Skip if no match
     echo "========================================"
     echo "Checking: $impl"
     echo "========================================"
