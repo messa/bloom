@@ -1,0 +1,19 @@
+[package]
+name = "rust_parquet_sbbf_ngram"
+version = "0.1.0"
+edition = "2021"
+description = "Split Block Bloom Filter implementation based on Apache Parquet specification"
+
+[[bin]]
+name = "rust_parquet_sbbf_ngram"
+path = "src/main.rs"
+
+[dependencies]
+xxhash-rust = { version = "0.8", features = ["xxh64"] }
+regex = "1"
+flate2 = "1"
+xz2 = "0.1"
+
+[profile.release]
+opt-level = 3
+lto = true
