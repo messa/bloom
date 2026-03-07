@@ -1,0 +1,78 @@
+{
+  "generated_at": "2026-01-23T20:36:18.753123",
+  "random_seed": 42,
+  "files": [
+    {
+      "filename": "fastapi_server_1.log.xz",
+      "type": "fastapi",
+      "uncompressed_bytes": 157286478,
+      "compressed_bytes": 35839456,
+      "sha1": "1b88b2b817d256d05a61e9429e5f9fe068d72827"
+    },
+    {
+      "filename": "fastapi_server_2.log.xz",
+      "type": "fastapi",
+      "uncompressed_bytes": 157286440,
+      "compressed_bytes": 35839716,
+      "sha1": "df535000a782512ea7ded4a5b4d6f85103b9c36c"
+    },
+    {
+      "filename": "user_service.log.xz",
+      "type": "microservice",
+      "uncompressed_bytes": 157286467,
+      "compressed_bytes": 25024436,
+      "sha1": "5958a0716071ef45b5b68d2601887f80f70ec461"
+    },
+    {
+      "filename": "order_service.log.xz",
+      "type": "microservice",
+      "uncompressed_bytes": 157286467,
+      "compressed_bytes": 24114288,
+      "sha1": "94d710b38d0b3d3d9b5255223446b9d30aecac50"
+    },
+    {
+      "filename": "payment_service.log.xz",
+      "type": "microservice",
+      "uncompressed_bytes": 157286417,
+      "compressed_bytes": 25475584,
+      "sha1": "6f7e82d749e627879a883371de472ee412f867f0"
+    },
+    {
+      "filename": "auth_service.log.xz",
+      "type": "microservice",
+      "uncompressed_bytes": 157286413,
+      "compressed_bytes": 24637052,
+      "sha1": "705b649f70d51fe0b20b4be27bee153893845c2e"
+    },
+    {
+      "filename": "gateway.log.xz",
+      "type": "microservice",
+      "uncompressed_bytes": 157286468,
+      "compressed_bytes": 24635228,
+      "sha1": "87e662bacbf9481755b180b6b3dbd8f6ec5e7b4c"
+    },
+    {
+      "filename": "mongodb_primary.log.xz",
+      "type": "mongodb",
+      "uncompressed_bytes": 157286679,
+      "compressed_bytes": 14111504,
+      "sha1": "81d63e2e7690e95f4fcde7648313daece3065c2f"
+    },
+    {
+      "filename": "mongodb_secondary.log.xz",
+      "type": "mongodb",
+      "uncompressed_bytes": 157286677,
+      "compressed_bytes": 14112872,
+      "sha1": "e3de7ae8cc0c922a4c07ab622a225c1127fd3748"
+    },
+    {
+      "filename": "analytics_service.log.xz",
+      "type": "microservice",
+      "uncompressed_bytes": 157286447,
+      "compressed_bytes": 25686548,
+      "sha1": "7a3e71912ca64a2e0d77df4f56afe28124f6331c"
+    }
+  ],
+  "total_uncompressed_bytes": 1572864953,
+  "total_compressed_bytes": 249476684
+}

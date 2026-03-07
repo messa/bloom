@@ -1,0 +1,33 @@
+# Generated log files
+logs/*.log
+logs/*.log.gz
+logs/*.log.xz
+
+# Keep manifest and hashes
+!logs/sha1sums.txt
+!logs/manifest.json
+
+# Build artifacts
+implementations/build/
+implementations/**/*.so
+implementations/**/*.o
+implementations/bits-and-blooms-bloom/bloom-cli
+implementations/dcso-bloom/bloom-cli
+implementations/pagebloomfilter/pagebloom-cli
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Go
+implementations/*/go.sum
+
+# Rust
+implementations/*/target/
+
+# Temporary files
+*.tmp
+*.bak

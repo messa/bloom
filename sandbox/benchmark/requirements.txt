@@ -1,0 +1,8 @@
+# Python dependencies for bloom filter benchmark
+
+# Bloom filter implementations (Python bindings)
+fastbloom-rs>=0.6.0
+rbloom>=0.7.0
+
+# This project (messa/bloom)
+# Install from parent directory: pip install -e ../..

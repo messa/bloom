@@ -1,0 +1,82 @@
+# Sample queries for bloom filter benchmark
+# These queries simulate real-world search patterns
+
+# URL paths and parts
+/api/v1/users
+/api/v1/orders
+/api/v1/products
+/health
+/metrics
+/api/v2/analytics
+campaigns/stats
+
+# Request IDs (partial)
+req-
+req-a1b2c3
+request_id
+
+# User/Account/Business IDs
+usr_
+usr_12345
+acc_
+acc_54321
+biz_
+cmp_
+ord_
+
+# Error messages (partial)
+Connection refused
+Timeout waiting
+Invalid JSON
+Authentication failed
+Permission denied
+Resource not found
+Database connection
+Rate limit exceeded
+Internal server error
+Service unavailable
+
+# Function names from tracebacks
+process_request
+validate_input
+get_user_by_id
+create_order
+authenticate_user
+handle_error
+
+# Python filenames from tracebacks
+main.py
+routes.py
+user_service.py
+order_service.py
+error_handler.py
+
+# Log levels and patterns
+ERROR
+WARNING
+CRITICAL
+Traceback
+RuntimeError
+Exception
+
+# MongoDB specific
+COMMAND
+IXSCAN
+COLLSCAN
+durationMillis
+aggregate
+
+# Microservice names
+user-service
+order-service
+payment-service
+auth-service
+gateway
+
+# HTTP methods and status codes
+GET /api
+POST /api
+200
+404
+500
+502

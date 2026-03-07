@@ -1,5 +1,7 @@
 # Bloom filter implementation benchmark
 
+**Note:** See `learnings.md` for accumulated knowledge, URLs, and implementation notes from previous work on this benchmark.
+
 The benchmark is about false positive rate and index size.
 It is not about implementation speed.
 We expect that query performance is very fast and indexing performance reasonable fast for any C, C++, Rust or Go implementation.
